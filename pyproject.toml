@@ -27,3 +27,6 @@ test = [
     "pytest",
     "sphinx-pytest",
 ]
+docs = [
+    "myst-parser",
+]

@@ -8,6 +8,7 @@ author = "Christian López Barrón"
 copyright = f"{date.today().year}, {author}"
 
 extensions = [
+    "myst_parser",
     "sphinx_pyrepl_web",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
