@@ -14,24 +14,6 @@ from sphinx.util.fileutil import copy_asset_file
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
 REPLAY_FILES_KEY = "pyrepl-replay-files"
-DEBUG_LOG_PATH = Path(__file__).resolve().parents[1] / "debug-e838cf.log"
-
-
-def _debug_log(location: str, message: str, data: dict, hypothesis_id: str) -> None:
-    # #region agent log
-    import time
-
-    entry = {
-        "sessionId": "e838cf",
-        "timestamp": int(time.time() * 1000),
-        "location": location,
-        "message": message,
-        "data": data,
-        "hypothesisId": hypothesis_id,
-    }
-    with open(DEBUG_LOG_PATH, "a", encoding="utf-8") as log_file:
-        log_file.write(json.dumps(entry) + "\n")
-    # #endregion
 
 
 def setup(app: Sphinx):
@@ -137,17 +119,6 @@ class PyRepl(SphinxDirective):
             )
             replay_src = f"_static/pyrepl/{script_name}"
             attrs.append(f'replay-src="{replay_src}"')
-            _debug_log(
-                "PyRepl.run",
-                "registered replay script in metadata",
-                {
-                    "docname": env.docname,
-                    "script_name": script_name,
-                    "replay_src": replay_src,
-                    "body_len": len(body_text),
-                },
-                "H2",
-            )
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
         attr_str = (" " + " ".join(attrs)) if attrs else ""
@@ -180,7 +151,6 @@ def copy_asset_files(app, _):
                 copy_asset_file(str(asset.resolve()), str(outdir.resolve()))
 
     replay_dest = outdir / "_static" / "pyrepl"
-    written_replay_files: list[str] = []
     for docname, metadata in app.env.metadata.items():
         raw = metadata.get(REPLAY_FILES_KEY)
         if not raw:
@@ -191,21 +161,6 @@ def copy_asset_files(app, _):
         replay_dest.mkdir(parents=True, exist_ok=True)
         for name, content in replay_files.items():
             (replay_dest / name).write_text(content, encoding="utf-8")
-            written_replay_files.append(name)
-
-    _debug_log(
-        "copy_asset_files",
-        "wrote replay scripts from metadata",
-        {
-            "outdir": str(outdir),
-            "written_count": len(written_replay_files),
-            "written_files": written_replay_files,
-            "metadata_docs_with_replay": sum(
-                1 for meta in app.env.metadata.values() if meta.get(REPLAY_FILES_KEY)
-            ),
-        },
-        "H1",
-    )
 
     srcdir = Path(app.builder.srcdir)
     copied = set()
