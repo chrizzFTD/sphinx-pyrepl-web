@@ -99,3 +99,8 @@ Use ``:replay:`` on ``:file:`` to replay a file with prompts instead of silent l
    :replay:
    :no-header:
    :no-banner:
+
+The replay script:
+
+.. literalinclude:: _static/replay_demo.py
+   :language: python
