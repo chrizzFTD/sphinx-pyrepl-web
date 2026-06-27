@@ -1,4 +1,25 @@
-from sphinx_pyrepl_web import strip_doctest_prompts
+from sphinx_pyrepl_web import extract_doctest_source, strip_doctest_prompts
+
+
+def test_extract_doctest_source_strips_expected_output():
+    block = ">>> add(1, 2)\n3\n>>> add(0, 0)\n0"
+    assert extract_doctest_source(block) == "add(1, 2)\nadd(0, 0)\n"
+
+
+def test_extract_doctest_source_example_generator():
+    block = ">>> print([i for i in example_generator(4)])\n[0, 1, 2, 3]"
+    assert extract_doctest_source(block) == (
+        "print([i for i in example_generator(4)])\n"
+    )
+
+
+def test_extract_doctest_source_multiline_class():
+    block = ">>> class Foo:\n...     x = 1\n...\n>>> Foo()\n<Foo object>"
+    assert extract_doctest_source(block) == "class Foo:\n    x = 1\nFoo()\n"
+
+
+def test_extract_doctest_source_empty():
+    assert extract_doctest_source("not a doctest") == ""
 
 
 def test_issue_7_multiline_class_with_bare_terminator():

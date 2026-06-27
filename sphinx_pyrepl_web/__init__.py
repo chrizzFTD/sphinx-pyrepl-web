@@ -3,10 +3,12 @@
 __version__ = "0.1.1"
 
 import json
+from doctest import DocTestParser
 from pathlib import Path
 
 from docutils import nodes
 from docutils.parsers.rst import directives
+from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
@@ -14,16 +16,29 @@ from sphinx.util.fileutil import copy_asset_file
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
 REPLAY_FILES_KEY = "pyrepl-replay-files"
+_DOCTEST_PARSER = DocTestParser()
 
 
 def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
+    app.add_config_value("pyrepl_doctest_blocks", "autodoc", "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
+    app.connect("doctree-resolved", transform_doctest_blocks)
     app.connect("html-page-context", add_html_context)
     app.connect("env-updated", copy_asset_files)
     return {"version": __version__, "parallel_read_safe": True}
+
+
+def extract_doctest_source(text: str) -> str:
+    """Extract executable Python source from doctest-formatted text."""
+    lines: list[str] = []
+    for example in _DOCTEST_PARSER.get_examples(text):
+        lines.extend(example.source.splitlines())
+    if not lines:
+        return ""
+    return "\n".join(lines) + "\n"
 
 
 def strip_doctest_prompts(lines: list[str]) -> list[str]:
@@ -51,6 +66,59 @@ def strip_doctest_prompts(lines: list[str]) -> list[str]:
     return result
 
 
+def register_replay_script(env, docname: str, body_text: str) -> str:
+    """Record a replay script in env metadata and return its replay-src path."""
+    replay_files = json.loads(
+        env.metadata[docname].setdefault(REPLAY_FILES_KEY, "{}")
+    )
+    counter = len(replay_files) + 1
+    script_name = f"{docname.replace('/', '-')}-{counter}.py"
+    replay_files[script_name] = body_text
+    env.metadata[docname][REPLAY_FILES_KEY] = json.dumps(replay_files)
+    return f"_static/pyrepl/{script_name}"
+
+
+def make_pyrepl_raw(replay_src: str) -> nodes.raw:
+    """Build a raw HTML node for an autodoc doctest replay widget."""
+    return nodes.raw(
+        "",
+        f'<py-repl replay-src="{replay_src}" no-header no-banner></py-repl>\n',
+        format="html",
+    )
+
+
+def _inside_autodoc_desc(node: nodes.Node) -> bool:
+    """Return True if *node* is nested inside an autodoc desc entry."""
+    current = node.parent
+    while current is not None:
+        if isinstance(current, addnodes.desc):
+            return True
+        current = current.parent
+    return False
+
+
+def transform_doctest_blocks(app: Sphinx, doctree: nodes.document, docname: str):
+    """Replace doctest blocks with interactive py-repl widgets."""
+    scope = app.config.pyrepl_doctest_blocks
+    if not scope:
+        return
+
+    env = app.env
+    replaced = False
+    for node in doctree.findall(nodes.doctest_block):
+        if scope == "autodoc" and not _inside_autodoc_desc(node):
+            continue
+        source = extract_doctest_source(node.astext())
+        if not source.strip():
+            continue
+        replay_src = register_replay_script(env, docname, source)
+        node.replace_self(make_pyrepl_raw(replay_src))
+        replaced = True
+
+    if replaced:
+        env.metadata[docname]["pyrepl"] = True
+
+
 class PyRepl(SphinxDirective):
     """Embed a pyrepl-web ``<py-repl>`` element."""
 
@@ -66,7 +134,6 @@ class PyRepl(SphinxDirective):
         "no-banner": directives.flag,
         "replay": directives.flag,
         "silent": directives.flag,
-        "strip-prompts": directives.flag,
     }
 
     def run(self):
@@ -118,17 +185,7 @@ class PyRepl(SphinxDirective):
         if has_body:
             body_lines = strip_doctest_prompts(list(self.content))
             body_text = "\n".join(body_lines) + "\n"
-
-            replay_files = json.loads(
-                self.env.metadata[self.env.docname].setdefault(REPLAY_FILES_KEY, "{}")
-            )
-            counter = len(replay_files) + 1
-            script_name = f"{env.docname.replace('/', '-')}-{counter}.py"
-            replay_files[script_name] = body_text
-            self.env.metadata[self.env.docname][REPLAY_FILES_KEY] = json.dumps(
-                replay_files
-            )
-            replay_src = f"_static/pyrepl/{script_name}"
+            replay_src = register_replay_script(env, env.docname, body_text)
             attrs.append(f'replay-src="{replay_src}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True

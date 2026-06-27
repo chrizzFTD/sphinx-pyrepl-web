@@ -56,7 +56,6 @@ Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attri
 | `:src:` | Path to a Python startup script | ✅                |
 | `:replay:` | Replay `:src:` with interactive prompts instead of silent load | ✅                |
 | `:silent:` | Keep `:src:` silent even when combined with a directive body | ❌                |
-| `:strip-prompts:` | Strip ``>>>`` / ``...`` prefixes from directive body | ❌                |
 | `:no-header:` | Hide the header bar | ✅                |
 | `:no-buttons:` | Hide copy/clear buttons | ✅                |
 | `:readonly:` | Disable input | ✅                |
@@ -68,7 +67,52 @@ Optional Sphinx config:
 
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
+pyrepl_doctest_blocks = "autodoc"  # default; see Autodoc integration below
 ```
+
+### Autodoc integration
+
+When used with `sphinx.ext.autodoc` (and optionally `sphinx.ext.napoleon` for Google/NumPy-style docstrings), doctest examples in documented API entries are automatically converted into interactive REPLs.
+
+```python
+# conf.py
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx_pyrepl_web",
+]
+pyrepl_doctest_blocks = "autodoc"  # default
+```
+
+Write doctest examples in your docstrings as usual:
+
+```python
+def example_generator(n):
+    """Generators have a ``Yields`` section instead of a ``Returns`` section.
+
+    Examples:
+        >>> print([i for i in example_generator(4)])
+        [0, 1, 2, 3]
+
+    """
+    yield from range(n)
+```
+
+Document the function with autodoc — no manual `.. py-repl::` directive needed:
+
+```rst
+.. autofunction:: my_module.example_generator
+```
+
+The static doctest block is replaced with an interactive REPL at build time. Expected output lines (e.g. `[0, 1, 2, 3]`) are stripped; only executable input is replayed.
+
+| `pyrepl_doctest_blocks` | Behavior |
+|---|---|
+| `False` | Disable autodoc transform; only explicit `.. py-repl::` directives |
+| `"autodoc"` (default) | Transform doctests inside autodoc API entries only |
+| `"all"` | Transform every doctest block on every page |
+
+**Note:** the browser REPL runs in Pyodide and cannot import your local package unless you bootstrap it (e.g. with a global `:src:` setup script). Autodoc REPL examples work best for stdlib snippets or self-contained code. Auto-bootstrap is planned for a future release.
 
 ## Updating pyrepl-web
 

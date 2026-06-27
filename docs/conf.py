@@ -1,6 +1,10 @@
 from datetime import date
+import sys
+from pathlib import Path
 
 from sphinx_pyrepl_web import __version__
+
+sys.path.insert(0, str(Path(__file__).parent / "_static"))
 
 project = "sphinx-pyrepl-web"
 version = __version__
@@ -9,6 +13,8 @@ copyright = f"{date.today().year}, {author}"
 
 extensions = [
     "myst_parser",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
     "sphinx_pyrepl_web",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
