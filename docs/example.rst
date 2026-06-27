@@ -120,6 +120,8 @@ Autodoc integration
 When ``sphinx.ext.autodoc`` is enabled, doctest examples in API docstrings are
 automatically converted into interactive REPLs (``pyrepl_doctest_blocks = "autodoc"``,
 the default). Expected output lines are stripped; only executable input is replayed.
+The documented module's source is loaded silently via ``:src:`` before replay, so
+functions like ``example_generator`` are available in the REPL namespace.
 
 Source module:
 

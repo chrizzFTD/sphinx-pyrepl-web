@@ -2,9 +2,12 @@
 
 __version__ = "0.1.1"
 
+import importlib
+import inspect
 import json
 from doctest import DocTestParser
 from pathlib import Path
+import sys
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -23,6 +26,7 @@ def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
     app.add_config_value("pyrepl_doctest_blocks", "autodoc", "env")
+    app.add_config_value("pyrepl_autodoc_bootstrap", True, "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
     app.connect("doctree-read", transform_doctest_blocks)
@@ -66,35 +70,115 @@ def strip_doctest_prompts(lines: list[str]) -> list[str]:
     return result
 
 
-def register_replay_script(env, docname: str, body_text: str) -> str:
-    """Record a replay script in env metadata and return its replay-src path."""
+def _next_replay_counter(replay_files: dict[str, str]) -> int:
+    return sum(1 for name in replay_files if not name.endswith("-bootstrap.py")) + 1
+
+
+def register_autodoc_repl(
+    env,
+    docname: str,
+    replay_text: str,
+    *,
+    bootstrap_src: str | None = None,
+    bootstrap_content: str | None = None,
+) -> tuple[str, str | None]:
+    """Record replay and optional bootstrap scripts, returning HTML src paths."""
     replay_files = json.loads(
         env.metadata[docname].setdefault(REPLAY_FILES_KEY, "{}")
     )
-    counter = len(replay_files) + 1
-    script_name = f"{docname.replace('/', '-')}-{counter}.py"
-    replay_files[script_name] = body_text
+    counter = _next_replay_counter(replay_files)
+    base = f"{docname.replace('/', '-')}-{counter}"
+    replay_name = f"{base}.py"
+    replay_files[replay_name] = replay_text
+
+    startup_src = bootstrap_src
+    if bootstrap_content is not None:
+        bootstrap_name = f"{base}-bootstrap.py"
+        replay_files[bootstrap_name] = bootstrap_content
+        startup_src = f"_static/pyrepl/{bootstrap_name}"
+
     env.metadata[docname][REPLAY_FILES_KEY] = json.dumps(replay_files)
-    return f"_static/pyrepl/{script_name}"
+    return f"_static/pyrepl/{replay_name}", startup_src
 
 
-def make_pyrepl_raw(replay_src: str) -> nodes.raw:
-    """Build a raw HTML node for an autodoc doctest replay widget."""
-    return nodes.raw(
-        "",
-        f'<py-repl replay-src="{replay_src}" no-header no-banner></py-repl>\n',
-        format="html",
+def register_replay_script(env, docname: str, body_text: str) -> str:
+    """Record a replay script in env metadata and return its replay-src path."""
+    replay_src, _ = register_autodoc_repl(env, docname, body_text)
+    return replay_src
+
+
+def register_startup_file(env, docname: str, path: Path) -> str:
+    """Track a startup script under srcdir for copying into HTML output."""
+    env.note_dependency(path)
+    rel_src = path.relative_to(Path(env.srcdir)).as_posix()
+    startup_files = json.loads(
+        env.metadata[docname].setdefault(STARTUP_FILES_KEY, "[]")
     )
+    abs_path = str(path.resolve())
+    if abs_path not in startup_files:
+        startup_files.append(abs_path)
+        env.metadata[docname][STARTUP_FILES_KEY] = json.dumps(startup_files)
+    return rel_src
+
+
+def make_pyrepl_raw(replay_src: str, src: str | None = None) -> nodes.raw:
+    """Build a raw HTML node for an autodoc doctest replay widget."""
+    attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
+    if src:
+        attrs.insert(0, f'src="{src}"')
+    attr_str = " ".join(attrs)
+    return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
+
+
+def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
+    """Return the enclosing autodoc desc node, if any."""
+    current = node.parent
+    while current is not None:
+        if isinstance(current, addnodes.desc):
+            return current
+        current = current.parent
+    return None
+
+
+def _resolve_autodoc_bootstrap(
+    app: Sphinx, env, docname: str, desc: addnodes.desc
+) -> tuple[str | None, str | None]:
+    """Return (startup src path, generated bootstrap content) for autodoc REPLs."""
+    if not app.config.pyrepl_autodoc_bootstrap:
+        return None, None
+
+    sig = desc.next_node(addnodes.desc_signature)
+    if sig is None:
+        return None, None
+
+    module_name = sig.get("module")
+    fullname = sig.get("fullname")
+    if not module_name:
+        return None, None
+
+    try:
+        mod = sys.modules.get(module_name)
+        if mod is None:
+            mod = importlib.import_module(module_name)
+        obj = mod
+        if fullname:
+            for part in fullname.split("."):
+                obj = getattr(obj, part)
+        mod_obj = inspect.getmodule(obj) or mod
+        source_path = Path(inspect.getfile(mod_obj)).resolve()
+        srcdir = Path(env.srcdir).resolve()
+        try:
+            source_path.relative_to(srcdir)
+            return register_startup_file(env, docname, source_path), None
+        except ValueError:
+            return None, inspect.getsource(mod_obj) + "\n"
+    except (AttributeError, ImportError, OSError, TypeError):
+        return None, None
 
 
 def _inside_autodoc_desc(node: nodes.Node) -> bool:
     """Return True if *node* is nested inside an autodoc desc entry."""
-    current = node.parent
-    while current is not None:
-        if isinstance(current, addnodes.desc):
-            return True
-        current = current.parent
-    return False
+    return _find_autodoc_desc(node) is not None
 
 
 def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
@@ -112,8 +196,21 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
         source = extract_doctest_source(node.astext())
         if not source.strip():
             continue
-        replay_src = register_replay_script(env, docname, source)
-        node.replace_self(make_pyrepl_raw(replay_src))
+        bootstrap_src = None
+        bootstrap_content = None
+        desc = _find_autodoc_desc(node)
+        if desc is not None:
+            bootstrap_src, bootstrap_content = _resolve_autodoc_bootstrap(
+                app, env, docname, desc
+            )
+        replay_src, startup_src = register_autodoc_repl(
+            env,
+            docname,
+            source,
+            bootstrap_src=bootstrap_src,
+            bootstrap_content=bootstrap_content,
+        )
+        node.replace_self(make_pyrepl_raw(replay_src, startup_src))
         replaced = True
 
     if replaced:

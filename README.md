@@ -68,6 +68,7 @@ Optional Sphinx config:
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
 pyrepl_doctest_blocks = "autodoc"  # default; see Autodoc integration below
+pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
 ### Autodoc integration
@@ -112,7 +113,7 @@ The static doctest block is replaced with an interactive REPL at build time. Exp
 | `"autodoc"` (default) | Transform doctests inside autodoc API entries only |
 | `"all"` | Transform every doctest block on every page |
 
-**Note:** the browser REPL runs in Pyodide and cannot import your local package unless you bootstrap it (e.g. with a global `:src:` setup script). Autodoc REPL examples work best for stdlib snippets or self-contained code. Auto-bootstrap is planned for a future release.
+**Note:** autodoc REPLs automatically bootstrap the documented module's source as a silent `:src:` startup script (`pyrepl_autodoc_bootstrap = True` by default), so doctest examples can call documented functions. Modules outside the Sphinx source directory get a generated bootstrap script under `_static/pyrepl/`. Disable with `pyrepl_autodoc_bootstrap = False`. Modules that import unavailable packages may still fail in the browser REPL.
 
 ## Updating pyrepl-web
 
