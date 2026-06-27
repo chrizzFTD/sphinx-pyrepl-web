@@ -13,6 +13,7 @@ from sphinx.util.fileutil import copy_asset_file
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
+REPLAY_SCRIPTS_ENV_KEY = "pyrepl_replay_scripts"
 
 
 def setup(app: Sphinx):
@@ -25,10 +26,24 @@ def setup(app: Sphinx):
     return {"version": __version__, "parallel_read_safe": True}
 
 
+def strip_doctest_prompts(lines: list[str]) -> list[str]:
+    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines."""
+    result: list[str] = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith(">>> "):
+            result.append(stripped[4:])
+        elif stripped.startswith("... "):
+            result.append(stripped[4:])
+        else:
+            result.append(line)
+    return result
+
+
 class PyRepl(SphinxDirective):
     """Embed a pyrepl-web ``<py-repl>`` element."""
 
-    has_content = False
+    has_content = True
     option_spec = {
         "theme": directives.unchanged,
         "packages": directives.unchanged,
@@ -38,10 +53,15 @@ class PyRepl(SphinxDirective):
         "no-buttons": directives.flag,
         "readonly": directives.flag,
         "no-banner": directives.flag,
+        "replay": directives.flag,
+        "silent": directives.flag,
+        "strip-prompts": directives.flag,
     }
 
     def run(self):
-        attrs = []
+        env = self.env
+        attrs: list[str] = []
+
         for option, attr in (
             ("theme", "theme"),
             ("packages", "packages"),
@@ -55,6 +75,10 @@ class PyRepl(SphinxDirective):
             if flag in self.options:
                 attrs.append(flag)
 
+        has_body = bool(self.content)
+        force_replay = "replay" in self.options
+        force_silent = "silent" in self.options
+
         if "file" in self.options:
             _, abs_path = self.env.relfn2path(self.options["file"])
             path = Path(abs_path)
@@ -64,7 +88,6 @@ class PyRepl(SphinxDirective):
                 raise self.error(f"Could not read file: {exc}") from exc
             self.env.note_dependency(path)
             rel_src = path.relative_to(Path(self.env.srcdir)).as_posix()
-            attrs.append(f'src="{rel_src}"')
             startup_files = json.loads(
                 self.env.metadata[self.env.docname].setdefault(
                     STARTUP_FILES_KEY, "[]"
@@ -74,6 +97,24 @@ class PyRepl(SphinxDirective):
             self.env.metadata[self.env.docname][STARTUP_FILES_KEY] = json.dumps(
                 startup_files
             )
+
+            if force_replay and not has_body:
+                attrs.append(f'src="{rel_src}"')
+                attrs.append("replay")
+            elif not (force_silent and not has_body):
+                attrs.append(f'src="{rel_src}"')
+
+        if has_body:
+            body_lines = strip_doctest_prompts(list(self.content))
+
+            if not hasattr(env, REPLAY_SCRIPTS_ENV_KEY):
+                env.pyrepl_replay_scripts = {}
+            counter = getattr(env, "pyrepl_counter", 0) + 1
+            env.pyrepl_counter = counter
+            script_name = f"{env.docname.replace('/', '-')}-{counter}.py"
+            env.pyrepl_replay_scripts[script_name] = "\n".join(body_lines) + "\n"
+            replay_src = f"_static/pyrepl/{script_name}"
+            attrs.append(f'replay-src="{replay_src}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
         attr_str = (" " + " ".join(attrs)) if attrs else ""
@@ -104,6 +145,13 @@ def copy_asset_files(app, _):
         for asset in PYREPL_DIR.iterdir():
             if asset.is_file():
                 copy_asset_file(str(asset.resolve()), str(outdir.resolve()))
+
+    replay_scripts = getattr(app.env, REPLAY_SCRIPTS_ENV_KEY, {})
+    if replay_scripts:
+        replay_dest = outdir / "_static" / "pyrepl"
+        replay_dest.mkdir(parents=True, exist_ok=True)
+        for name, content in replay_scripts.items():
+            (replay_dest / name).write_text(content, encoding="utf-8")
 
     srcdir = Path(app.builder.srcdir)
     copied = set()
