@@ -10,18 +10,20 @@ Basic REPL
 
 .. py-repl::
 
-Light theme without header
---------------------------
+Light theme without header & banner
+-----------------------------------
 
 .. code-block:: rst
 
    .. py-repl::
       :theme: catppuccin-latte
       :no-header:
+      :no-banner:
 
 .. py-repl::
    :theme: catppuccin-latte
    :no-header:
+   :no-banner:
 
 Startup script
 --------------
