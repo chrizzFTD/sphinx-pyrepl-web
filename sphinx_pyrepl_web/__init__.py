@@ -27,14 +27,25 @@ def setup(app: Sphinx):
 
 
 def strip_doctest_prompts(lines: list[str]) -> list[str]:
-    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines."""
+    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines.
+
+    Bare ``...`` lines (doctest block terminators with no trailing content) are
+    dropped, since they carry no Python semantics.
+    """
     result: list[str] = []
     for line in lines:
         stripped = line.lstrip()
         if stripped.startswith(">>> "):
             result.append(stripped[4:])
         elif stripped.startswith("... "):
-            result.append(stripped[4:])
+            remainder = stripped[4:]
+            if remainder.strip() == "" and stripped != "... ":
+                continue
+            result.append(remainder)
+        elif stripped == "..." or (
+            len(stripped) > 3 and stripped.startswith("...") and stripped[3:].strip() == ""
+        ):
+            continue
         else:
             result.append(line)
     return result

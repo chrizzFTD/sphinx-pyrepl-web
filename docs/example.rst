@@ -48,7 +48,8 @@ Replay session
 --------------
 
 Inline directive content is replayed with ``>>>`` prompts, syntax highlighting,
-and live output. Doctest-style ``>>>`` prefixes are stripped automatically.
+and live output. Doctest-style ``>>>`` / ``...`` prefixes and bare ``...``
+block terminators are stripped automatically.
 
 .. code-block:: rst
 
@@ -59,6 +60,10 @@ and live output. Doctest-style ``>>>`` prefixes are stripped automatically.
       >>> x = 2 + 2
       >>> print(f"{x=}")
       >>> x * 10
+      >>> class Foo:
+      ...     x = 1
+      ...
+      >>> Foo()
 
 .. py-repl::
    :no-header:
@@ -67,6 +72,10 @@ and live output. Doctest-style ``>>>`` prefixes are stripped automatically.
    >>> x = 2 + 2
    >>> print(f"{x=}")
    >>> x * 10
+   >>> class Foo:
+   ...     x = 1
+   ...
+   >>> Foo()
 
 Combine a silent bootstrap file with a visible replay body:
 

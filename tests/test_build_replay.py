@@ -84,3 +84,51 @@ def test_build_writes_replay_script_with_parallel_read(sphinx_project):
 
     script_path = outdir / "_static" / "pyrepl" / "index-1.py"
     assert script_path.is_file(), f"missing replay script at {script_path}"
+
+
+def test_build_omits_bare_doctest_terminator(tmp_path):
+    srcdir = tmp_path / "docs"
+    srcdir.mkdir()
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+    (srcdir / "conf.py").write_text(
+        "extensions = ['sphinx_pyrepl_web']\n"
+        "pyrepl_js = 'pyrepl.js'\n"
+        "master_doc = 'index'\n",
+        encoding="utf-8",
+    )
+    (srcdir / "index.rst").write_text(
+        """
+Example
+=======
+
+.. py-repl::
+   :no-header:
+
+   >>> class Foo:
+   ...     x = 1
+   ...
+   >>> Foo()
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    outdir.mkdir(parents=True, exist_ok=True)
+    doctreedir.mkdir(parents=True, exist_ok=True)
+    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
+        app = Sphinx(
+            srcdir=str(srcdir),
+            confdir=str(srcdir),
+            outdir=str(outdir),
+            doctreedir=str(doctreedir),
+            buildername="html",
+            warning=warning_file,
+            freshenv=True,
+        )
+        app.build()
+
+    script_path = outdir / "_static" / "pyrepl" / "index-1.py"
+    script = script_path.read_text(encoding="utf-8")
+    assert "class Foo:" in script
+    assert "\n...\n" not in script
+    assert script.strip().endswith("Foo()")
