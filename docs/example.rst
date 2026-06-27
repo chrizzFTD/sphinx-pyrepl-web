@@ -28,16 +28,16 @@ Light theme without header & banner
 Startup script
 --------------
 
-The ``:file:`` option loads a Python script into the REPL namespace. If the script
+The ``:src:`` option loads a Python script into the REPL namespace. If the script
 defines a ``setup()`` function, its output is shown when the REPL starts.
 
 .. code-block:: rst
 
    .. py-repl::
-      :file: _static/setup.py
+      :src: _static/setup.py
 
 .. py-repl::
-   :file: _static/setup.py
+   :src: _static/setup.py
 
 The startup script:
 
@@ -73,29 +73,29 @@ Combine a silent bootstrap file with a visible replay body:
 .. code-block:: rst
 
    .. py-repl::
-      :file: _static/setup.py
+      :src: _static/setup.py
       :no-header:
 
       >>> print(message)
 
 .. py-repl::
-   :file: _static/setup.py
+   :src: _static/setup.py
    :no-header:
 
    >>> print(message)
 
-Use ``:replay:`` on ``:file:`` to replay a file with prompts instead of silent load:
+Use ``:replay:`` on ``:src:`` to replay a file with prompts instead of silent load:
 
 .. code-block:: rst
 
    .. py-repl::
-      :file: _static/replay_demo.py
+      :src: _static/replay_demo.py
       :replay:
       :no-header:
       :no-banner:
 
 .. py-repl::
-   :file: _static/replay_demo.py
+   :src: _static/replay_demo.py
    :replay:
    :no-header:
    :no-banner:

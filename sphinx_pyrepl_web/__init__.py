@@ -48,7 +48,7 @@ class PyRepl(SphinxDirective):
         "theme": directives.unchanged,
         "packages": directives.unchanged,
         "repl-title": directives.unchanged,
-        "file": directives.path,
+        "src": directives.path,
         "no-header": directives.flag,
         "no-buttons": directives.flag,
         "readonly": directives.flag,
@@ -79,8 +79,8 @@ class PyRepl(SphinxDirective):
         force_replay = "replay" in self.options
         force_silent = "silent" in self.options
 
-        if "file" in self.options:
-            _, abs_path = self.env.relfn2path(self.options["file"])
+        if "src" in self.options:
+            _, abs_path = self.env.relfn2path(self.options["src"])
             path = Path(abs_path)
             try:
                 path.read_text(encoding="utf-8")

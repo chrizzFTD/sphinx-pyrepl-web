@@ -60,7 +60,7 @@ def test_replay_file_flag(sphinx_doctree: CreateDoctree):
     result = sphinx_doctree(
         """
 .. py-repl::
-   :file: demo.py
+   :src: demo.py
    :replay:
     """
     )
