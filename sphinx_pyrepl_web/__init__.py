@@ -1,6 +1,6 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 import json
 from pathlib import Path
@@ -27,14 +27,25 @@ def setup(app: Sphinx):
 
 
 def strip_doctest_prompts(lines: list[str]) -> list[str]:
-    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines."""
+    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines.
+
+    Bare ``...`` lines (doctest block terminators with no trailing content) become
+    blank lines, since they mark the end of a multi-line input block in the REPL.
+    """
     result: list[str] = []
     for line in lines:
         stripped = line.lstrip()
         if stripped.startswith(">>> "):
             result.append(stripped[4:])
-        elif stripped.startswith("... "):
-            result.append(stripped[4:])
+        elif stripped.startswith("..."):
+            if stripped.startswith("... "):
+                remainder = stripped[4:]
+            else:
+                remainder = stripped[3:]
+            if remainder.strip() == "":
+                result.append("")
+            else:
+                result.append(remainder)
         else:
             result.append(line)
     return result
