@@ -1,6 +1,6 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.2.0"
+__version__ = "0.1.1"
 
 import json
 from pathlib import Path
@@ -23,11 +23,6 @@ def setup(app: Sphinx):
     app.connect("doctree-read", doctree_read)
     app.connect("html-page-context", add_html_context)
     app.connect("env-updated", copy_asset_files)
-
-    from sphinx_pyrepl_web.autodoc import register as register_autodoc
-
-    register_autodoc(app)
-
     return {"version": __version__, "parallel_read_safe": True}
 
 
@@ -54,20 +49,6 @@ def strip_doctest_prompts(lines: list[str]) -> list[str]:
         else:
             result.append(line)
     return result
-
-
-def register_replay_script(env, docname: str, body_lines: list[str]) -> str:
-    """Strip doctest prompts, store replay script in metadata, return replay-src path."""
-    body_text = "\n".join(strip_doctest_prompts(body_lines)) + "\n"
-
-    replay_files = json.loads(
-        env.metadata[docname].setdefault(REPLAY_FILES_KEY, "{}")
-    )
-    counter = len(replay_files) + 1
-    script_name = f"{docname.replace('/', '-')}-{counter}.py"
-    replay_files[script_name] = body_text
-    env.metadata[docname][REPLAY_FILES_KEY] = json.dumps(replay_files)
-    return f"_static/pyrepl/{script_name}"
 
 
 class PyRepl(SphinxDirective):
@@ -135,7 +116,19 @@ class PyRepl(SphinxDirective):
                 attrs.append(f'src="{rel_src}"')
 
         if has_body:
-            replay_src = register_replay_script(env, env.docname, list(self.content))
+            body_lines = strip_doctest_prompts(list(self.content))
+            body_text = "\n".join(body_lines) + "\n"
+
+            replay_files = json.loads(
+                self.env.metadata[self.env.docname].setdefault(REPLAY_FILES_KEY, "{}")
+            )
+            counter = len(replay_files) + 1
+            script_name = f"{env.docname.replace('/', '-')}-{counter}.py"
+            replay_files[script_name] = body_text
+            self.env.metadata[self.env.docname][REPLAY_FILES_KEY] = json.dumps(
+                replay_files
+            )
+            replay_src = f"_static/pyrepl/{script_name}"
             attrs.append(f'replay-src="{replay_src}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
