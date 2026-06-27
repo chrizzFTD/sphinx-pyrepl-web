@@ -70,6 +70,40 @@ Optional Sphinx config:
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
 ```
 
+## Autodoc integration
+
+When `sphinx.ext.autodoc` is enabled, you can automatically convert docstring
+``Example:`` / ``Examples:`` doctest blocks into interactive REPLs at build time.
+Python source docstrings stay unchanged (full doctests with expected output are
+preserved for IDE hover docs and optional ``doctest`` runs).
+
+Add to `conf.py`:
+
+```python
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx_pyrepl_web",
+]
+
+pyrepl_autodoc = True
+pyrepl_autodoc_packages = "my_package"  # required for Pyodide import
+pyrepl_autodoc_sections = ["Example"]
+pyrepl_autodoc_options = {"no-banner": True}
+```
+
+| Config | Default | Description |
+|--------|---------|-------------|
+| `pyrepl_autodoc` | `False` | Enable autodoc docstring → REPL conversion |
+| `pyrepl_autodoc_packages` | `None` | Value for `:packages:` on generated directives (auto-derived from object name when unset) |
+| `pyrepl_autodoc_sections` | `["Example", "Examples"]` | Section titles to convert |
+| `pyrepl_autodoc_options` | `{}` | Default directive flags, e.g. `{"no-banner": True}` |
+
+**Limitations (v0.2.0):**
+
+- Targets raw Google-style / plain-text section headers (without `sphinx.ext.napoleon`). Napoleon-converted sections are not detected yet.
+- `:packages:` (or auto-derivation) is required so Pyodide can import your library.
+- Live REPL output may differ from doctest expected output (e.g. `PosixPath` vs `WindowsPath`, traceback formatting).
+
 ## Updating pyrepl-web
 
 Since [chrizzFTD/pyrepl-web](https://github.com/chrizzFTD/pyrepl-web) is a fork, this sphinx extension vendors the JavaScript assets for easier distribution. To update them, run:
