@@ -42,16 +42,17 @@ def test_build_writes_replay_script_from_metadata(sphinx_project):
     srcdir, outdir, doctreedir = sphinx_project
     outdir.mkdir(parents=True, exist_ok=True)
     doctreedir.mkdir(parents=True, exist_ok=True)
-    app = Sphinx(
-        srcdir=str(srcdir),
-        confdir=str(srcdir),
-        outdir=str(outdir),
-        doctreedir=str(doctreedir),
-        buildername="html",
-        warning=open(outdir / "warnings.txt", "w", encoding="utf-8"),
-        freshenv=True,
-    )
-    app.build()
+    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
+        app = Sphinx(
+            srcdir=str(srcdir),
+            confdir=str(srcdir),
+            outdir=str(outdir),
+            doctreedir=str(doctreedir),
+            buildername="html",
+            warning=warning_file,
+            freshenv=True,
+        )
+        app.build()
 
     replay_files = json.loads(app.env.metadata["index"].get("pyrepl-replay-files", "{}"))
     assert replay_files
@@ -68,17 +69,18 @@ def test_build_writes_replay_script_with_parallel_read(sphinx_project):
     srcdir, outdir, doctreedir = sphinx_project
     outdir.mkdir(parents=True, exist_ok=True)
     doctreedir.mkdir(parents=True, exist_ok=True)
-    app = Sphinx(
-        srcdir=str(srcdir),
-        confdir=str(srcdir),
-        outdir=str(outdir),
-        doctreedir=str(doctreedir),
-        buildername="html",
-        warning=open(outdir / "warnings.txt", "w", encoding="utf-8"),
-        freshenv=True,
-        parallel=2,
-    )
-    app.build()
+    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
+        app = Sphinx(
+            srcdir=str(srcdir),
+            confdir=str(srcdir),
+            outdir=str(outdir),
+            doctreedir=str(doctreedir),
+            buildername="html",
+            warning=warning_file,
+            freshenv=True,
+            parallel=2,
+        )
+        app.build()
 
     script_path = outdir / "_static" / "pyrepl" / "index-1.py"
     assert script_path.is_file(), f"missing replay script at {script_path}"
