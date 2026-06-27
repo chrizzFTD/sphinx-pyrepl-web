@@ -48,7 +48,7 @@ Embed a REPL with the `py-repl` directive:
 
 Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with a few exceptions unique to this extension: 
 
-| Option | Description | pyrepl-web attr? |
+| Option | Description | `pyrepl-web` attr? |
 |--------|-------------|------------------|
 | `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`) | ✅                |
 | `:packages:` | Comma-separated PyPI packages to preload | ✅                |
