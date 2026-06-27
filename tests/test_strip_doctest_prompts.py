@@ -11,12 +11,13 @@ def test_issue_7_multiline_class_with_bare_terminator():
     assert strip_doctest_prompts(lines) == [
         "class Foo:",
         "    x = 1",
+        "",
         "Foo()",
     ]
 
 
 def test_bare_terminator_with_trailing_whitespace():
-    assert strip_doctest_prompts(["   ...  "]) == []
+    assert strip_doctest_prompts(["   ...  "]) == [""]
 
 
 def test_continuation_line_preserved():

@@ -131,4 +131,4 @@ Example
     script = script_path.read_text(encoding="utf-8")
     assert "class Foo:" in script
     assert "\n...\n" not in script
-    assert script.strip().endswith("Foo()")
+    assert "    x = 1\n\nFoo()" in script
