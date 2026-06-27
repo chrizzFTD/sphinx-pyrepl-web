@@ -107,6 +107,9 @@ def test_autodoc_doctest_becomes_pyrepl(autodoc_project):
     assert "no-header" in html
     assert "no-banner" in html
 
+    script_path = outdir / "_static" / "pyrepl" / script_name
+    assert script_path.is_file(), f"missing replay script at {script_path}"
+
 
 def test_autodoc_scope_skips_plain_rst_doctest(autodoc_project):
     srcdir, outdir, doctreedir, _ = autodoc_project

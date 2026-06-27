@@ -25,7 +25,7 @@ def setup(app: Sphinx):
     app.add_config_value("pyrepl_doctest_blocks", "autodoc", "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
-    app.connect("doctree-resolved", transform_doctest_blocks)
+    app.connect("doctree-read", transform_doctest_blocks)
     app.connect("html-page-context", add_html_context)
     app.connect("env-updated", copy_asset_files)
     return {"version": __version__, "parallel_read_safe": True}
@@ -97,13 +97,14 @@ def _inside_autodoc_desc(node: nodes.Node) -> bool:
     return False
 
 
-def transform_doctest_blocks(app: Sphinx, doctree: nodes.document, docname: str):
+def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
     """Replace doctest blocks with interactive py-repl widgets."""
     scope = app.config.pyrepl_doctest_blocks
     if not scope:
         return
 
     env = app.env
+    docname = env.docname
     replaced = False
     for node in doctree.findall(nodes.doctest_block):
         if scope == "autodoc" and not _inside_autodoc_desc(node):
