@@ -20,7 +20,7 @@ Test
     assert (
         [line.rstrip() for line in result.pformat().strip().splitlines()]
         == """
-<document pyrepl="True" source="<src>/index.rst">
+<document pyrepl="1" source="<src>/index.rst">
     <section ids="test" names="test">
         <title>
             Test
