@@ -17,9 +17,10 @@ Test
 
     """
     )
-    assert (
-        [line.rstrip() for line in result.pformat().strip().splitlines()]
-        == """
+    lines = [line.rstrip() for line in result.pformat().strip().splitlines()]
+    # Sphinx may serialize doctree bool attrs as "1" or "True" depending on version.
+    lines[0] = lines[0].replace('pyrepl="True"', 'pyrepl="1"')
+    assert lines == """
 <document pyrepl="1" source="<src>/index.rst">
     <section ids="test" names="test">
         <title>
@@ -29,7 +30,6 @@ Test
         <raw format="html" xml:space="preserve">
             <py-repl></py-repl>
     """.strip().splitlines()
-    )
 
 
 def test_replay_body(sphinx_doctree: CreateDoctree):
