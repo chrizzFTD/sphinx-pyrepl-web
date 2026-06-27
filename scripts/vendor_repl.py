@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 
 REPO = "https://github.com/chrizzFTD/pyrepl-web.git"
-BRANCH = "grill"
+DEFAULT_BRANCH = "grill"
 
 
 def run(cmd: list[str], *, cwd: Path | None = None) -> None:
@@ -32,8 +32,14 @@ def main() -> None:
         default=Path(__file__).resolve().parent.parent / "sphinx_pyrepl_web" / "pyrepl",
         help="Directory to write vendored assets into",
     )
+    parser.add_argument(
+        "--branch",
+        default=DEFAULT_BRANCH,
+        help=f"pyrepl-web branch to vendor (default: {DEFAULT_BRANCH})",
+    )
     args = parser.parse_args()
     asset_dir: Path = args.asset_dir
+    branch: str = args.branch
 
     require_tool("git")
     require_tool("bun")
@@ -47,7 +53,7 @@ def main() -> None:
                 "--depth",
                 "1",
                 "--branch",
-                BRANCH,
+                branch,
                 REPO,
                 str(clone_dir),
             ]
@@ -74,13 +80,13 @@ def main() -> None:
                 copied.append(src.name)
 
         version_file = asset_dir / "version.txt"
-        version_file.write_text(f"{BRANCH}@{commit}\n", encoding="utf-8")
+        version_file.write_text(f"{branch}@{commit}\n", encoding="utf-8")
         copied.append("version.txt")
 
     print(f"\nVendored {len(copied)} file(s) to {asset_dir}:")
     for name in copied:
         print(f"  {name}")
-    print(f"Source: {REPO} ({BRANCH}@{commit})")
+    print(f"Source: {REPO} ({branch}@{commit})")
 
 
 if __name__ == "__main__":
