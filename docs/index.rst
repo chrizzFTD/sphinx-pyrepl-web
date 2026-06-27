@@ -1,9 +1,7 @@
 .. include:: ../README.md
    :parser: myst_parser.sphinx_
 
-See :doc:`example` for live demos.
+.. include:: example.rst
 
 .. toctree::
-   :hidden:
-
-   example
+   :maxdepth: 2

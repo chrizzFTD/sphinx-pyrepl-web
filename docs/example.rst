@@ -10,8 +10,8 @@ Basic REPL
 
 .. py-repl::
 
-Light theme without header & banner
------------------------------------
+Light theme, minimal
+--------------------
 
 .. code-block:: rst
 
@@ -44,8 +44,8 @@ The startup script:
 .. literalinclude:: _static/setup.py
    :language: python
 
-Interactive session
--------------------
+Replay session
+--------------
 
 Inline directive content is replayed with ``>>>`` prompts, syntax highlighting,
 and live output. Doctest-style ``>>>`` prefixes are stripped automatically.

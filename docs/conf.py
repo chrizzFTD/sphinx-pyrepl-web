@@ -12,3 +12,10 @@ extensions = [
     "sphinx_pyrepl_web",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+html_sidebars = {
+    "**": [
+        "about.html",
+        "localtoc.html",
+    ],
+}
