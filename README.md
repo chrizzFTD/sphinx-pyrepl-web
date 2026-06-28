@@ -46,7 +46,7 @@ Embed a REPL with the `py-repl` directive:
 
 ### Directive options
 
-Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, the exception of `silent`: 
+Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with the exception of `silent`: 
 
 | Option | Description |
 |--------|-------------|
@@ -67,7 +67,7 @@ Optional Sphinx config:
 
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
-pyrepl_doctest_blocks = "autodoc"  # default; see Autodoc integration below
+pyrepl_doctest_blocks = "autodoc"  # default; see Docstring conversion below
 pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
@@ -86,11 +86,11 @@ pyrepl_doctest_blocks = "autodoc"  # default
 
 The static doctest block is replaced at build time.
 
-| `pyrepl_doctest_blocks` | Behavior                              |
-|---|---------------------------------------|
-| `False` | Disable autodoc conversion            |
-| `"autodoc"` (default) | Only convert doctests through autodoc |
-| `"all"` | Transform every doctest block found   |
+| `pyrepl_doctest_blocks` | Behavior                            |
+|---|-------------------------------------|
+| `False` | Disable autodoc conversion          |
+| `"autodoc"` | Convert doctests found by autodoc   |
+| `"all"` | Transform every doctest block found |
 
 **Note:** autodoc REPLs automatically bootstrap the documented module's source as a silent `:src:` startup script (`pyrepl_autodoc_bootstrap = True` by default), so doctest examples can call documented functions. Modules outside the Sphinx source directory get a generated bootstrap script under `_static/pyrepl/`. Disable with `pyrepl_autodoc_bootstrap = False`. Modules that import unavailable packages will fail in the browser REPL.
 
