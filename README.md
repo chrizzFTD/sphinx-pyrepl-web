@@ -46,7 +46,7 @@ Embed a REPL with the `py-repl` directive:
 
 ### Directive options
 
-Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with the exception of `silent`: 
+All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with the exception of `silent`: 
 
 | Option | Description |
 |--------|-------------|
@@ -61,7 +61,7 @@ Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attri
 | `:readonly:` | Disable input |
 | `:no-banner:` | Hide the Python version banner |
 
-Directive body content (inline Python in the `.. py-repl::` block) is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
+Python code within the `.. py-repl::` directive is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
 
 Optional Sphinx config:
 
@@ -73,7 +73,7 @@ pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc R
 
 ### Docstring conversion
 
-Doctest examples in docstrings are converted into executable replay input with an interactive REPL, this integrates with `sphinx.ext.autodoc`. 
+Doctest examples in docstrings can be converted into a REPL at build time, which integrates with `sphinx.ext.autodoc`. 
 
 ```python
 # conf.py
