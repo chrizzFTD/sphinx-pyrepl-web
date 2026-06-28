@@ -84,20 +84,20 @@ extensions = [
 pyrepl_doctest_blocks = "autodoc"  # default
 ```
 
-The static doctest block is replaced at build time.
+`pyrepl_doctest_blocks` options:
 
-| `pyrepl_doctest_blocks` | Behavior |
-|---|---|
-| `False` | Disable autodoc conversion |
-| `"autodoc"` | Convert doctests found by autodoc |
-| `"all"` | Transform every doctest block found |
+|                       |                                     |
+|-----------------------|-------------------------------------|
+| `False`               | Disable autodoc conversion          |
+| `"autodoc"` (default) | Convert doctests found by autodoc   |
+| `"all"`               | Transform every doctest block found |
 
-| `pyrepl_autodoc_bootstrap` | Behavior |
-|---|---|
-| `True` (default) | Silently load the documented module as `:src:` before replay (from srcdir, or generated under `_static/pyrepl/`) |
-| `False` | Replay doctest input only; documented names are not pre-defined |
+`pyrepl_autodoc_bootstrap` options:
 
-Modules with imports unavailable in Pyodide may still fail at runtime.
+|                  |                                                                 |
+|------------------|-----------------------------------------------------------------|
+| `True` (default) | Silently load the documented module as `:src:` before replay    |
+| `False`          | Replay doctest input only; documented names are not pre-defined |
 
 ## Updating pyrepl-web
 
