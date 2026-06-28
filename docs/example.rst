@@ -114,21 +114,18 @@ The replay script:
 .. literalinclude:: _static/replay_demo.py
    :language: python
 
-Autodoc integration
--------------------
+Autodoc
+-------
 
-When ``sphinx.ext.autodoc`` is enabled, doctest examples in API docstrings are
-automatically converted into interactive REPLs (``pyrepl_doctest_blocks = "autodoc"``,
-the default). Expected output lines are stripped; only executable input is replayed.
-The documented module's source is loaded silently via ``:src:`` before replay, so
-functions like ``example_generator`` are available in the REPL namespace.
+The documented module's source is loaded in advanced via ``:src:`` before replay, so
+module members are available in the REPL namespace.
 
 Source module:
 
 .. literalinclude:: _static/autodoc_demo.py
    :language: python
 
-RST page (autodoc only — no manual ``.. py-repl::`` needed):
+RST content:
 
 .. code-block:: rst
 

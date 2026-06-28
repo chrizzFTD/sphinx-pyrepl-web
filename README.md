@@ -46,22 +46,22 @@ Embed a REPL with the `py-repl` directive:
 
 ### Directive options
 
-Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with a few exceptions unique to this extension: 
+Most options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, the exception of `silent`: 
 
-| Option | Description | `pyrepl-web` attr? |
-|--------|-------------|------------------|
-| `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`) | ✅                |
-| `:packages:` | Comma-separated PyPI packages to preload | ✅                |
-| `:repl-title:` | Title in the REPL header | ✅                |
-| `:src:` | Path to a Python startup script | ✅                |
-| `:replay:` | Replay `:src:` with interactive prompts instead of silent load | ✅                |
-| `:silent:` | Keep `:src:` silent even when combined with a directive body | ❌                |
-| `:no-header:` | Hide the header bar | ✅                |
-| `:no-buttons:` | Hide copy/clear buttons | ✅                |
-| `:readonly:` | Disable input | ✅                |
-| `:no-banner:` | Hide the Python version banner | ✅                |
+| Option | Description |
+|--------|-------------|
+| `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`) |
+| `:packages:` | Comma-separated PyPI packages to preload |
+| `:repl-title:` | Title in the REPL header |
+| `:src:` | Path to a Python startup script |
+| `:replay:` | Replay `:src:` with interactive prompts instead of silent load |
+| `:silent:` | Keep `:src:` silent even when combined with a directive body |
+| `:no-header:` | Hide the header bar |
+| `:no-buttons:` | Hide copy/clear buttons |
+| `:readonly:` | Disable input |
+| `:no-banner:` | Hide the Python version banner |
 
-Directive body content (inline Python in the `.. py-repl::` block) is also extension-only: it is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
+Directive body content (inline Python in the `.. py-repl::` block) is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
 
 Optional Sphinx config:
 
@@ -71,49 +71,28 @@ pyrepl_doctest_blocks = "autodoc"  # default; see Autodoc integration below
 pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
-### Autodoc integration
+### Docstring conversion
 
-When used with `sphinx.ext.autodoc` (and optionally `sphinx.ext.napoleon` for Google/NumPy-style docstrings), doctest examples in documented API entries are automatically converted into interactive REPLs.
+Doctest examples in docstrings are converted into executable replay input with an interactive REPL, this integrates with `sphinx.ext.autodoc`. 
 
 ```python
 # conf.py
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
     "sphinx_pyrepl_web",
 ]
 pyrepl_doctest_blocks = "autodoc"  # default
 ```
 
-Write doctest examples in your docstrings as usual:
+The static doctest block is replaced at build time.
 
-```python
-def example_generator(n):
-    """Generators have a ``Yields`` section instead of a ``Returns`` section.
+| `pyrepl_doctest_blocks` | Behavior                              |
+|---|---------------------------------------|
+| `False` | Disable autodoc conversion            |
+| `"autodoc"` (default) | Only convert doctests through autodoc |
+| `"all"` | Transform every doctest block found   |
 
-    Examples:
-        >>> print([i for i in example_generator(4)])
-        [0, 1, 2, 3]
-
-    """
-    yield from range(n)
-```
-
-Document the function with autodoc — no manual `.. py-repl::` directive needed:
-
-```rst
-.. autofunction:: my_module.example_generator
-```
-
-The static doctest block is replaced with an interactive REPL at build time. Expected output lines (e.g. `[0, 1, 2, 3]`) are stripped; only executable input is replayed.
-
-| `pyrepl_doctest_blocks` | Behavior |
-|---|---|
-| `False` | Disable autodoc transform; only explicit `.. py-repl::` directives |
-| `"autodoc"` (default) | Transform doctests inside autodoc API entries only |
-| `"all"` | Transform every doctest block on every page |
-
-**Note:** autodoc REPLs automatically bootstrap the documented module's source as a silent `:src:` startup script (`pyrepl_autodoc_bootstrap = True` by default), so doctest examples can call documented functions. Modules outside the Sphinx source directory get a generated bootstrap script under `_static/pyrepl/`. Disable with `pyrepl_autodoc_bootstrap = False`. Modules that import unavailable packages may still fail in the browser REPL.
+**Note:** autodoc REPLs automatically bootstrap the documented module's source as a silent `:src:` startup script (`pyrepl_autodoc_bootstrap = True` by default), so doctest examples can call documented functions. Modules outside the Sphinx source directory get a generated bootstrap script under `_static/pyrepl/`. Disable with `pyrepl_autodoc_bootstrap = False`. Modules that import unavailable packages will fail in the browser REPL.
 
 ## Updating pyrepl-web
 
