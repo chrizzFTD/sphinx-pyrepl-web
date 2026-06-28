@@ -86,13 +86,18 @@ pyrepl_doctest_blocks = "autodoc"  # default
 
 The static doctest block is replaced at build time.
 
-| `pyrepl_doctest_blocks` | Behavior                            |
-|---|-------------------------------------|
-| `False` | Disable autodoc conversion          |
-| `"autodoc"` | Convert doctests found by autodoc   |
+| `pyrepl_doctest_blocks` | Behavior |
+|---|---|
+| `False` | Disable autodoc conversion |
+| `"autodoc"` | Convert doctests found by autodoc |
 | `"all"` | Transform every doctest block found |
 
-**Note:** autodoc REPLs automatically bootstrap the documented module's source as a silent `:src:` startup script (`pyrepl_autodoc_bootstrap = True` by default), so doctest examples can call documented functions. Modules outside the Sphinx source directory get a generated bootstrap script under `_static/pyrepl/`. Disable with `pyrepl_autodoc_bootstrap = False`. Modules that import unavailable packages will fail in the browser REPL.
+| `pyrepl_autodoc_bootstrap` | Behavior |
+|---|---|
+| `True` (default) | Silently load the documented module as `:src:` before replay (from srcdir, or generated under `_static/pyrepl/`) |
+| `False` | Replay doctest input only; documented names are not pre-defined |
+
+Modules with imports unavailable in Pyodide may still fail at runtime.
 
 ## Updating pyrepl-web
 
