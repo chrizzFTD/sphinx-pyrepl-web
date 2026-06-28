@@ -215,6 +215,7 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
 
     if replaced:
         env.metadata[docname]["pyrepl"] = True
+        doctree["pyrepl"] = True
 
 
 class PyRepl(SphinxDirective):

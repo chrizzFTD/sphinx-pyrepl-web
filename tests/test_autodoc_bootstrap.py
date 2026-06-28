@@ -60,7 +60,11 @@ pyrepl_js = "pyrepl.js"
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert 'src="_static/demo.py"' in html
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
+    assert "pyrepl.js" in html
     assert (outdir / "_static" / "demo.py").is_file()
+
+    doctree = app.env.get_doctree("index")
+    assert doctree.get("pyrepl")
 
     replay_files = json.loads(
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
