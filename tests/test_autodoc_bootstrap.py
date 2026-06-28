@@ -70,3 +70,79 @@ pyrepl_js = "pyrepl.js"
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
     assert list(replay_files) == ["index-1.py"]
+
+
+def test_autodoc_bootstrap_uses_packages_for_installed_module(tmp_path):
+    pkg_dir = tmp_path / "installed_pkg"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text(
+        '''
+from .core import Widget as _Widget
+
+class Widget(_Widget):
+    """A demo widget.
+
+    Example:
+        >>> w = Widget()
+        >>> w.label
+        'ready'
+
+    """
+    pass
+'''.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+    (pkg_dir / "core.py").write_text(
+        '''
+class Widget:
+    label = "ready"
+'''.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    srcdir = tmp_path / "docs"
+    srcdir.mkdir()
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+
+    (srcdir / "conf.py").write_text(
+        f"""
+import sys
+sys.path.insert(0, {str(pkg_dir.parent)!r})
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
+master_doc = "index"
+pyrepl_js = "pyrepl.js"
+""",
+        encoding="utf-8",
+    )
+    (srcdir / "index.rst").write_text(".. autoclass:: installed_pkg.Widget\n", encoding="utf-8")
+
+    outdir.mkdir(parents=True, exist_ok=True)
+    doctreedir.mkdir(parents=True, exist_ok=True)
+    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
+        app = Sphinx(
+            srcdir=str(srcdir),
+            confdir=str(srcdir),
+            outdir=str(outdir),
+            doctreedir=str(doctreedir),
+            buildername="html",
+            warning=warning_file,
+            freshenv=True,
+        )
+        app.build()
+
+    html = (outdir / "index.html").read_text(encoding="utf-8")
+    assert 'packages="installed_pkg"' in html
+    assert 'replay-src="_static/pyrepl/index-1.py"' in html
+    assert "<py-repl" in html
+    pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
+    assert ' src="' not in pyrepl_tag
+
+    replay_files = json.loads(
+        app.env.metadata["index"].get("pyrepl-replay-files", "{}")
+    )
+    assert len(replay_files) == 1
+    script = next(iter(replay_files.values()))
+    assert script == "w = Widget()\n\nw.label\n"

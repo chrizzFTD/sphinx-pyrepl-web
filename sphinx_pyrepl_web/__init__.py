@@ -35,14 +35,39 @@ def setup(app: Sphinx):
     return {"version": __version__, "parallel_read_safe": True}
 
 
+def doctest_to_replay_source(text_or_lines: str | list[str]) -> str:
+    """Convert doctest-formatted text into executable replay script source.
+
+    Uses :class:`doctest.DocTestParser` to strip expected output and split
+    separate examples, inserting blank lines between them so multiline blocks
+    (for example class definitions) stay valid Python. Falls back to prompt
+    stripping when the parser finds no examples but doctest markers are present.
+    """
+    if isinstance(text_or_lines, list):
+        lines = text_or_lines
+        text = "\n".join(lines)
+    else:
+        text = text_or_lines
+        lines = text.splitlines()
+
+    examples = _DOCTEST_PARSER.get_examples(text)
+    if examples:
+        parts = [example.source.rstrip("\n") for example in examples]
+        return "\n\n".join(parts) + "\n"
+
+    if any(
+        line.lstrip().startswith(">>>") or line.lstrip().startswith("...")
+        for line in lines
+    ):
+        stripped = strip_doctest_prompts(lines)
+        if stripped:
+            return "\n".join(stripped) + "\n"
+    return ""
+
+
 def extract_doctest_source(text: str) -> str:
     """Extract executable Python source from doctest-formatted text."""
-    lines: list[str] = []
-    for example in _DOCTEST_PARSER.get_examples(text):
-        lines.extend(example.source.splitlines())
-    if not lines:
-        return ""
-    return "\n".join(lines) + "\n"
+    return doctest_to_replay_source(text)
 
 
 def strip_doctest_prompts(lines: list[str]) -> list[str]:
@@ -121,9 +146,15 @@ def register_startup_file(env, docname: str, path: Path) -> str:
     return rel_src
 
 
-def make_pyrepl_raw(replay_src: str, src: str | None = None) -> nodes.raw:
+def make_pyrepl_raw(
+    replay_src: str,
+    src: str | None = None,
+    packages: str | None = None,
+) -> nodes.raw:
     """Build a raw HTML node for an autodoc doctest replay widget."""
     attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
+    if packages:
+        attrs.insert(0, f'packages="{packages}"')
     if src:
         attrs.insert(0, f'src="{src}"')
     attr_str = " ".join(attrs)
@@ -142,19 +173,19 @@ def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
 
 def _resolve_autodoc_bootstrap(
     app: Sphinx, env, docname: str, desc: addnodes.desc
-) -> tuple[str | None, str | None]:
-    """Return (startup src path, generated bootstrap content) for autodoc REPLs."""
+) -> tuple[str | None, str | None, str | None]:
+    """Return (startup src path, bootstrap content, packages) for autodoc REPLs."""
     if not app.config.pyrepl_autodoc_bootstrap:
-        return None, None
+        return None, None, None
 
     sig = desc.next_node(addnodes.desc_signature)
     if sig is None:
-        return None, None
+        return None, None, None
 
     module_name = sig.get("module")
     fullname = sig.get("fullname")
     if not module_name:
-        return None, None
+        return None, None, None
 
     try:
         mod = sys.modules.get(module_name)
@@ -169,11 +200,11 @@ def _resolve_autodoc_bootstrap(
         srcdir = Path(env.srcdir).resolve()
         try:
             source_path.relative_to(srcdir)
-            return register_startup_file(env, docname, source_path), None
+            return register_startup_file(env, docname, source_path), None, None
         except ValueError:
-            return None, inspect.getsource(mod_obj) + "\n"
+            return None, None, module_name.split(".")[0]
     except (AttributeError, ImportError, OSError, TypeError):
-        return None, None
+        return None, None, None
 
 
 def _inside_autodoc_desc(node: nodes.Node) -> bool:
@@ -193,14 +224,15 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
     for node in doctree.findall(nodes.doctest_block):
         if scope == "autodoc" and not _inside_autodoc_desc(node):
             continue
-        source = extract_doctest_source(node.astext())
+        source = doctest_to_replay_source(node.astext())
         if not source.strip():
             continue
         bootstrap_src = None
         bootstrap_content = None
+        packages = None
         desc = _find_autodoc_desc(node)
         if desc is not None:
-            bootstrap_src, bootstrap_content = _resolve_autodoc_bootstrap(
+            bootstrap_src, bootstrap_content, packages = _resolve_autodoc_bootstrap(
                 app, env, docname, desc
             )
         replay_src, startup_src = register_autodoc_repl(
@@ -210,7 +242,7 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
             bootstrap_src=bootstrap_src,
             bootstrap_content=bootstrap_content,
         )
-        node.replace_self(make_pyrepl_raw(replay_src, startup_src))
+        node.replace_self(make_pyrepl_raw(replay_src, startup_src, packages))
         replaced = True
 
     if replaced:
@@ -282,8 +314,7 @@ class PyRepl(SphinxDirective):
                 attrs.append(f'src="{rel_src}"')
 
         if has_body:
-            body_lines = strip_doctest_prompts(list(self.content))
-            body_text = "\n".join(body_lines) + "\n"
+            body_text = doctest_to_replay_source(list(self.content))
             replay_src = register_replay_script(env, env.docname, body_text)
             attrs.append(f'replay-src="{replay_src}"')
 

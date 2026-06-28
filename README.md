@@ -93,7 +93,7 @@ pyrepl_doctest_blocks = "autodoc"  # default
 
 |                  | `pyrepl_autodoc_bootstrap` options                              |
 |------------------|-----------------------------------------------------------------|
-| `True` (default) | Silently load the documented module as `:src:` before replay    |
+| `True` (default) | Bootstrap autodoc REPLs: in-tree modules via silent `:src:`, installed packages via `packages=` |
 | `False`          | Replay doctest input only; documented names are not pre-defined |
 
 ## Updating pyrepl-web

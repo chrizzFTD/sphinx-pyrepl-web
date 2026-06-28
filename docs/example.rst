@@ -117,8 +117,9 @@ The replay script:
 Autodoc
 -------
 
-The documented module's source is loaded in advanced via ``:src:`` before replay, so
-module members are available in the REPL namespace.
+The documented module's source is loaded in advance before replay, so
+module members are available in the REPL namespace. Modules under the Sphinx
+source tree use silent ``:src:``; installed packages use ``packages=``.
 
 Source module:
 
