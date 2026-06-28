@@ -84,17 +84,14 @@ extensions = [
 pyrepl_doctest_blocks = "autodoc"  # default
 ```
 
-`pyrepl_doctest_blocks` options:
-
-|                       |                                     |
+|                       | `pyrepl_doctest_blocks` options     |
 |-----------------------|-------------------------------------|
 | `False`               | Disable autodoc conversion          |
 | `"autodoc"` (default) | Convert doctests found by autodoc   |
 | `"all"`               | Transform every doctest block found |
 
-`pyrepl_autodoc_bootstrap` options:
 
-|                  |                                                                 |
+|                  | `pyrepl_autodoc_bootstrap` options                              |
 |------------------|-----------------------------------------------------------------|
 | `True` (default) | Silently load the documented module as `:src:` before replay    |
 | `False`          | Replay doctest input only; documented names are not pre-defined |
