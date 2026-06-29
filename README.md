@@ -67,6 +67,7 @@ Optional Sphinx config:
 
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
+pyrepl_doctest_blocks = False  # default; see Docstring conversion below
 pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
@@ -83,17 +84,17 @@ extensions = [
 pyrepl_doctest_blocks = "autodoc"
 ```
 
-|                       | `pyrepl_doctest_blocks` options     |
-|-----------------------|-------------------------------------|
-| `False` (default)     | Disable autodoc conversion          |
-| `"autodoc"`           | Convert doctests found by autodoc   |
-| `"all"`               | Transform every doctest block found |
+|                   | `pyrepl_doctest_blocks` options     |
+|-------------------|-------------------------------------|
+| `False` (default) | Disable autodoc conversion          |
+| `"autodoc"`       | Convert doctests found by autodoc   |
+| `"all"`           | Transform every doctest block found |
 
 
-|                  | `pyrepl_autodoc_bootstrap` options                              |
-|------------------|-----------------------------------------------------------------|
-| `True` (default) | Bootstrap autodoc REPLs: in-tree modules via silent `:src:`, installed packages via `packages=` |
-| `False`          | Replay doctest input only; documented names are not pre-defined |
+|                  | `pyrepl_autodoc_bootstrap` options                                           |
+|------------------|------------------------------------------------------------------------------|
+| `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:`, packages via `packages=` |
+| `False`          | Replay doctest input only; documented names are not pre-defined              |
 
 ## Updating pyrepl-web
 

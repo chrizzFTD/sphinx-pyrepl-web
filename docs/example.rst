@@ -31,18 +31,22 @@ Startup script
 The ``:src:`` option loads a Python script into the REPL namespace. If the script
 defines a ``setup()`` function, its output is shown when the REPL starts.
 
+Startup script:
+
+.. literalinclude:: _static/setup.py
+   :language: python
+
+RST content:
+
 .. code-block:: rst
 
    .. py-repl::
       :src: _static/setup.py
 
+Rendered result:
+
 .. py-repl::
    :src: _static/setup.py
-
-The startup script:
-
-.. literalinclude:: _static/setup.py
-   :language: python
 
 Replay session
 --------------
@@ -93,7 +97,14 @@ Combine a silent bootstrap file with a visible replay body:
 
    >>> print(message)
 
-Use ``:replay:`` on ``:src:`` to replay a file with prompts instead of silent load:
+Use ``:replay:`` on ``:src:`` to source a file as replay.
+
+Source script:
+
+.. literalinclude:: _static/replay_demo.py
+   :language: python
+
+RST content:
 
 .. code-block:: rst
 
@@ -103,16 +114,13 @@ Use ``:replay:`` on ``:src:`` to replay a file with prompts instead of silent lo
       :no-header:
       :no-banner:
 
+Rendered result:
+
 .. py-repl::
    :src: _static/replay_demo.py
    :replay:
    :no-header:
    :no-banner:
-
-The replay script:
-
-.. literalinclude:: _static/replay_demo.py
-   :language: python
 
 Autodoc
 -------
