@@ -51,9 +51,7 @@ Rendered result:
 Replay session
 --------------
 
-Inline directive content is replayed with ``>>>`` prompts, syntax highlighting,
-and live output. Doctest-style ``>>>`` / ``...`` prefixes and bare ``...``
-block terminators are stripped automatically.
+Inline directive content should follow Doctest-style (``>>>`` / ``...``) and is used as replay prompts.
 
 .. code-block:: rst
 
