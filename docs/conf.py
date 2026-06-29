@@ -17,6 +17,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_pyrepl_web",
 ]
+pyrepl_doctest_blocks = "autodoc"
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_sidebars = {

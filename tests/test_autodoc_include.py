@@ -29,6 +29,7 @@ extensions = [
 ]
 master_doc = "index"
 pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
 exclude_patterns = ["example.rst"]
 """,
         encoding="utf-8",

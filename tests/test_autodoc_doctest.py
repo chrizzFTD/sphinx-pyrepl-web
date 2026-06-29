@@ -44,6 +44,7 @@ extensions = [
 ]
 master_doc = "index"
 pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
 """,
         encoding="utf-8",
     )
@@ -94,32 +95,20 @@ def test_autodoc_doctest_becomes_pyrepl(autodoc_project):
     replay_files = json.loads(
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
-    assert len(replay_files) == 2
-    replay_scripts = {
-        name: content for name, content in replay_files.items() if not name.endswith("-bootstrap.py")
-    }
-    bootstrap_scripts = {
-        name: content for name, content in replay_files.items() if name.endswith("-bootstrap.py")
-    }
-    assert len(replay_scripts) == 1
-    assert len(bootstrap_scripts) == 1
-    script_name = next(iter(replay_scripts))
-    script = replay_scripts[script_name]
+    assert len(replay_files) == 1
+    script_name = next(iter(replay_files))
+    script = replay_files[script_name]
     assert script == "print([i for i in example_generator(4)])\n"
     assert "[0, 1, 2, 3]" not in script
-    assert "def example_generator" in next(iter(bootstrap_scripts.values()))
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert f'replay-src="_static/pyrepl/{script_name}"' in html
-    assert 'src="_static/pyrepl/' in html
+    assert 'packages="repl_test_demo"' in html
     assert "no-header" in html
     assert "no-banner" in html
 
     script_path = outdir / "_static" / "pyrepl" / script_name
     assert script_path.is_file(), f"missing replay script at {script_path}"
-    bootstrap_name = next(iter(bootstrap_scripts))
-    bootstrap_path = outdir / "_static" / "pyrepl" / bootstrap_name
-    assert bootstrap_path.is_file(), f"missing bootstrap script at {bootstrap_path}"
 
 
 def test_autodoc_scope_skips_plain_rst_doctest(autodoc_project):
@@ -129,7 +118,7 @@ def test_autodoc_scope_skips_plain_rst_doctest(autodoc_project):
     replay_files = json.loads(
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
-    assert len(replay_files) == 2
+    assert len(replay_files) == 1
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert html.count("replay-src=") == 1
@@ -146,17 +135,17 @@ def test_all_scope_transforms_plain_rst_doctest(autodoc_project):
     replay_files = json.loads(
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
-    assert len(replay_files) == 3
+    assert len(replay_files) == 2
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert html.count("replay-src=") == 2
 
 
-def test_disabled_scope_leaves_doctest_static(autodoc_project):
+def test_default_scope_leaves_doctest_static(autodoc_project):
     srcdir, outdir, doctreedir, _ = autodoc_project
     conf = (srcdir / "conf.py").read_text(encoding="utf-8")
     (srcdir / "conf.py").write_text(
-        conf + "\npyrepl_doctest_blocks = False\n", encoding="utf-8"
+        conf.replace('pyrepl_doctest_blocks = "autodoc"\n', ""), encoding="utf-8"
     )
     app = _build_sphinx(srcdir, outdir, doctreedir)
 

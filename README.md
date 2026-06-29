@@ -67,13 +67,13 @@ Optional Sphinx config:
 
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
-pyrepl_doctest_blocks = "autodoc"  # default; see Docstring conversion below
+pyrepl_doctest_blocks = False  # default; see Docstring conversion below
 pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
 ### Docstring conversion
 
-Doctest examples in docstrings can be converted into a REPL at build time, which integrates with `sphinx.ext.autodoc`. 
+Converting doctest examples from docstrings into a REPL is opt-in with `sphinx.ext.autodoc`:
 
 ```python
 # conf.py
@@ -81,20 +81,20 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_pyrepl_web",
 ]
-pyrepl_doctest_blocks = "autodoc"  # default
+pyrepl_doctest_blocks = "autodoc"
 ```
 
-|                       | `pyrepl_doctest_blocks` options     |
-|-----------------------|-------------------------------------|
-| `False`               | Disable autodoc conversion          |
-| `"autodoc"` (default) | Convert doctests found by autodoc   |
-| `"all"`               | Transform every doctest block found |
+|                   | `pyrepl_doctest_blocks` options     |
+|-------------------|-------------------------------------|
+| `False` (default) | Disable autodoc conversion          |
+| `"autodoc"`       | Convert doctests found by autodoc   |
+| `"all"`           | Transform every doctest block found |
 
 
-|                  | `pyrepl_autodoc_bootstrap` options                              |
-|------------------|-----------------------------------------------------------------|
-| `True` (default) | Silently load the documented module as `:src:` before replay    |
-| `False`          | Replay doctest input only; documented names are not pre-defined |
+|                  | `pyrepl_autodoc_bootstrap` options                                           |
+|------------------|------------------------------------------------------------------------------|
+| `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:`, packages via `packages=` |
+| `False`          | Replay doctest input only; documented names are not pre-defined              |
 
 ## Updating pyrepl-web
 
@@ -107,7 +107,7 @@ python scripts/vendor_repl.py
 The `grill` branch is used by default. Use the `branch` argument to specify a different one:
 
 ```bash
-python scripts/vendor_repl.py --branch cursor/repl-startup-replay-2e3f
+python scripts/vendor_repl.py --branch custom/feature-branch
 ```
 
 This requires [git](https://git-scm.com/) and [Bun](https://bun.sh/).
