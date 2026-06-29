@@ -38,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "_static"))
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
 master_doc = "index"
 pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
 """,
         encoding="utf-8",
     )
@@ -114,6 +115,7 @@ sys.path.insert(0, {str(pkg_dir.parent)!r})
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
 master_doc = "index"
 pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
 """,
         encoding="utf-8",
     )

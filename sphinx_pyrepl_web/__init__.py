@@ -25,7 +25,7 @@ _DOCTEST_PARSER = DocTestParser()
 def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
-    app.add_config_value("pyrepl_doctest_blocks", "autodoc", "env")
+    app.add_config_value("pyrepl_doctest_blocks", False, "env")
     app.add_config_value("pyrepl_autodoc_bootstrap", True, "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)

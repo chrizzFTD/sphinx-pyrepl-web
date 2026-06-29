@@ -44,6 +44,7 @@ extensions = [
 ]
 master_doc = "index"
 pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
 """,
         encoding="utf-8",
     )
@@ -140,11 +141,11 @@ def test_all_scope_transforms_plain_rst_doctest(autodoc_project):
     assert html.count("replay-src=") == 2
 
 
-def test_disabled_scope_leaves_doctest_static(autodoc_project):
+def test_default_scope_leaves_doctest_static(autodoc_project):
     srcdir, outdir, doctreedir, _ = autodoc_project
     conf = (srcdir / "conf.py").read_text(encoding="utf-8")
     (srcdir / "conf.py").write_text(
-        conf + "\npyrepl_doctest_blocks = False\n", encoding="utf-8"
+        conf.replace('pyrepl_doctest_blocks = "autodoc"\n', ""), encoding="utf-8"
     )
     app = _build_sphinx(srcdir, outdir, doctreedir)
 

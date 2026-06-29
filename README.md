@@ -67,13 +67,12 @@ Optional Sphinx config:
 
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
-pyrepl_doctest_blocks = "autodoc"  # default; see Docstring conversion below
 pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
 ```
 
 ### Docstring conversion
 
-Doctest examples in docstrings can be converted into a REPL at build time, which integrates with `sphinx.ext.autodoc`. 
+Doctest examples in docstrings can be converted into a REPL at build time when you opt in with `sphinx.ext.autodoc`:
 
 ```python
 # conf.py
@@ -81,13 +80,13 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx_pyrepl_web",
 ]
-pyrepl_doctest_blocks = "autodoc"  # default
+pyrepl_doctest_blocks = "autodoc"
 ```
 
 |                       | `pyrepl_doctest_blocks` options     |
 |-----------------------|-------------------------------------|
-| `False`               | Disable autodoc conversion          |
-| `"autodoc"` (default) | Convert doctests found by autodoc   |
+| `False` (default)     | Disable autodoc conversion          |
+| `"autodoc"`           | Convert doctests found by autodoc   |
 | `"all"`               | Transform every doctest block found |
 
 
