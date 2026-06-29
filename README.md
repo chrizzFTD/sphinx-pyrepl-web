@@ -107,7 +107,7 @@ python scripts/vendor_repl.py
 The `grill` branch is used by default. Use the `branch` argument to specify a different one:
 
 ```bash
-python scripts/vendor_repl.py --branch cursor/repl-startup-replay-2e3f
+python scripts/vendor_repl.py --branch custom/feature-branch
 ```
 
 This requires [git](https://git-scm.com/) and [Bun](https://bun.sh/).
