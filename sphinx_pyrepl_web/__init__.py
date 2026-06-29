@@ -36,63 +36,17 @@ def setup(app: Sphinx):
 
 
 def doctest_to_replay_source(text_or_lines: str | list[str]) -> str:
-    """Convert doctest-formatted text into executable replay script source.
-
-    Uses :class:`doctest.DocTestParser` to strip expected output and split
-    separate examples, inserting blank lines between them so multiline blocks
-    (for example class definitions) stay valid Python. Falls back to prompt
-    stripping when the parser finds no examples but doctest markers are present.
-    """
-    if isinstance(text_or_lines, list):
-        lines = text_or_lines
-        text = "\n".join(lines)
-    else:
-        text = text_or_lines
-        lines = text.splitlines()
-
+    """Convert doctest-formatted text into executable replay script source."""
+    text = (
+        "\n".join(text_or_lines)
+        if isinstance(text_or_lines, list)
+        else text_or_lines
+    )
     examples = _DOCTEST_PARSER.get_examples(text)
-    if examples:
-        parts = [example.source.rstrip("\n") for example in examples]
-        return "\n\n".join(parts) + "\n"
-
-    if any(
-        line.lstrip().startswith(">>>") or line.lstrip().startswith("...")
-        for line in lines
-    ):
-        stripped = strip_doctest_prompts(lines)
-        if stripped:
-            return "\n".join(stripped) + "\n"
-    return ""
-
-
-def extract_doctest_source(text: str) -> str:
-    """Extract executable Python source from doctest-formatted text."""
-    return doctest_to_replay_source(text)
-
-
-def strip_doctest_prompts(lines: list[str]) -> list[str]:
-    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines.
-
-    Bare ``...`` lines (doctest block terminators with no trailing content) become
-    blank lines, since they mark the end of a multi-line input block in the REPL.
-    """
-    result: list[str] = []
-    for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith(">>> "):
-            result.append(stripped[4:])
-        elif stripped.startswith("..."):
-            if stripped.startswith("... "):
-                remainder = stripped[4:]
-            else:
-                remainder = stripped[3:]
-            if remainder.strip() == "":
-                result.append("")
-            else:
-                result.append(remainder)
-        else:
-            result.append(line)
-    return result
+    if not examples:
+        return ""
+    parts = [example.source.rstrip("\n") for example in examples]
+    return "\n\n".join(parts) + "\n"
 
 
 def _next_replay_counter(replay_files: dict[str, str]) -> int:
