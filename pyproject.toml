@@ -38,3 +38,8 @@ test = [
 docs = [
     "myst-parser",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:The mapping interface for autodoc options objects is deprecated:sphinx.deprecation.RemovedInSphinx11Warning",
+]

@@ -1,54 +1,191 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.1.1"
+__version__ = "0.2.0"
 
+import importlib
+import inspect
 import json
+from doctest import DocTestParser
 from pathlib import Path
+import sys
 
 from docutils import nodes
 from docutils.parsers.rst import directives
+from sphinx import addnodes
 from sphinx.application import Sphinx
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
 REPLAY_FILES_KEY = "pyrepl-replay-files"
+_DOCTEST_PARSER = DocTestParser()
+logger = logging.getLogger(__name__)
 
 
 def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
+    app.add_config_value("pyrepl_doctest_blocks", False, "env")
+    app.add_config_value("pyrepl_autodoc_bootstrap", True, "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
+    app.connect("doctree-read", transform_doctest_blocks)
     app.connect("html-page-context", add_html_context)
     app.connect("env-updated", copy_asset_files)
     return {"version": __version__, "parallel_read_safe": True}
 
 
-def strip_doctest_prompts(lines: list[str]) -> list[str]:
-    """Remove leading ``>>> `` / ``... `` prompts from doctest-style lines.
+def doctest_to_replay_source(text_or_lines: str | list[str]) -> str:
+    """Convert doctest-formatted text into executable replay script source."""
+    text = (
+        "\n".join(text_or_lines)
+        if isinstance(text_or_lines, list)
+        else text_or_lines
+    )
+    examples = _DOCTEST_PARSER.get_examples(text)
+    if not examples:
+        return ""
+    parts = [example.source.rstrip("\n") for example in examples]
+    return "\n\n".join(parts) + "\n"
 
-    Bare ``...`` lines (doctest block terminators with no trailing content) become
-    blank lines, since they mark the end of a multi-line input block in the REPL.
-    """
-    result: list[str] = []
-    for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith(">>> "):
-            result.append(stripped[4:])
-        elif stripped.startswith("..."):
-            if stripped.startswith("... "):
-                remainder = stripped[4:]
-            else:
-                remainder = stripped[3:]
-            if remainder.strip() == "":
-                result.append("")
-            else:
-                result.append(remainder)
-        else:
-            result.append(line)
-    return result
+
+def _next_replay_counter(replay_files: dict[str, str]) -> int:
+    return len(replay_files) + 1
+
+
+def register_autodoc_repl(
+    env,
+    docname: str,
+    replay_text: str,
+) -> str:
+    """Record a replay script in env metadata and return its replay-src path."""
+    replay_files = json.loads(
+        env.metadata[docname].setdefault(REPLAY_FILES_KEY, "{}")
+    )
+    counter = _next_replay_counter(replay_files)
+    replay_name = f"{docname.replace('/', '-')}-{counter}.py"
+    replay_files[replay_name] = replay_text
+    env.metadata[docname][REPLAY_FILES_KEY] = json.dumps(replay_files)
+    return f"_static/pyrepl/{replay_name}"
+
+
+def register_startup_file(env, docname: str, path: Path) -> str:
+    """Track a startup script under srcdir for copying into HTML output."""
+    env.note_dependency(path)
+    rel_src = path.relative_to(Path(env.srcdir)).as_posix()
+    startup_files = json.loads(
+        env.metadata[docname].setdefault(STARTUP_FILES_KEY, "[]")
+    )
+    abs_path = str(path.resolve())
+    if abs_path not in startup_files:
+        startup_files.append(abs_path)
+        env.metadata[docname][STARTUP_FILES_KEY] = json.dumps(startup_files)
+    return rel_src
+
+
+def make_pyrepl_raw(
+    replay_src: str,
+    src: str | None = None,
+    packages: str | None = None,
+) -> nodes.raw:
+    """Build a raw HTML node for an autodoc doctest replay widget."""
+    attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
+    if packages:
+        attrs.insert(0, f'packages="{packages}"')
+    if src:
+        attrs.insert(0, f'src="{src}"')
+    attr_str = " ".join(attrs)
+    return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
+
+
+def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
+    """Return the enclosing autodoc desc node, if any."""
+    current = node.parent
+    while current is not None:
+        if isinstance(current, addnodes.desc):
+            return current
+        current = current.parent
+    return None
+
+
+def _resolve_autodoc_bootstrap(
+    app: Sphinx, env, docname: str, desc: addnodes.desc
+) -> tuple[str | None, str | None]:
+    """Return (startup src path, packages) for autodoc REPLs."""
+    if not app.config.pyrepl_autodoc_bootstrap:
+        return None, None
+
+    sig = desc.next_node(addnodes.desc_signature)
+    if sig is None:
+        return None, None
+
+    module_name = sig.get("module")
+    fullname = sig.get("fullname")
+    if not module_name:
+        return None, None
+
+    target = f"{module_name}.{fullname}" if fullname else module_name
+    try:
+        mod = sys.modules.get(module_name)
+        if mod is None:
+            mod = importlib.import_module(module_name)
+        obj = mod
+        if fullname:
+            for part in fullname.split("."):
+                obj = getattr(obj, part)
+        mod_obj = inspect.getmodule(obj) or mod
+        source_path = Path(inspect.getfile(mod_obj)).resolve()
+        srcdir = Path(env.srcdir).resolve()
+        try:
+            source_path.relative_to(srcdir)
+            return register_startup_file(env, docname, source_path), None
+        except ValueError:
+            return None, module_name.split(".")[0]
+    except (AttributeError, ImportError, OSError, TypeError) as exc:
+        logger.error(
+            "Could not bootstrap autodoc REPL for %s: %s",
+            target,
+            exc,
+        )
+        return None, None
+
+
+def _inside_autodoc_desc(node: nodes.Node) -> bool:
+    """Return True if *node* is nested inside an autodoc desc entry."""
+    return _find_autodoc_desc(node) is not None
+
+
+def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
+    """Replace doctest blocks with interactive py-repl widgets."""
+    scope = app.config.pyrepl_doctest_blocks
+    if not scope:
+        return
+
+    env = app.env
+    docname = env.docname
+    replaced = False
+    for node in doctree.findall(nodes.doctest_block):
+        if scope == "autodoc" and not _inside_autodoc_desc(node):
+            continue
+        source = doctest_to_replay_source(node.astext())
+        if not source.strip():
+            continue
+        bootstrap_src = None
+        packages = None
+        desc = _find_autodoc_desc(node)
+        if desc is not None:
+            bootstrap_src, packages = _resolve_autodoc_bootstrap(
+                app, env, docname, desc
+            )
+        replay_src = register_autodoc_repl(env, docname, source)
+        node.replace_self(make_pyrepl_raw(replay_src, bootstrap_src, packages))
+        replaced = True
+
+    if replaced:
+        env.metadata[docname]["pyrepl"] = True
+        doctree["pyrepl"] = True
 
 
 class PyRepl(SphinxDirective):
@@ -66,7 +203,6 @@ class PyRepl(SphinxDirective):
         "no-banner": directives.flag,
         "replay": directives.flag,
         "silent": directives.flag,
-        "strip-prompts": directives.flag,
     }
 
     def run(self):
@@ -116,19 +252,8 @@ class PyRepl(SphinxDirective):
                 attrs.append(f'src="{rel_src}"')
 
         if has_body:
-            body_lines = strip_doctest_prompts(list(self.content))
-            body_text = "\n".join(body_lines) + "\n"
-
-            replay_files = json.loads(
-                self.env.metadata[self.env.docname].setdefault(REPLAY_FILES_KEY, "{}")
-            )
-            counter = len(replay_files) + 1
-            script_name = f"{env.docname.replace('/', '-')}-{counter}.py"
-            replay_files[script_name] = body_text
-            self.env.metadata[self.env.docname][REPLAY_FILES_KEY] = json.dumps(
-                replay_files
-            )
-            replay_src = f"_static/pyrepl/{script_name}"
+            body_text = doctest_to_replay_source(list(self.content))
+            replay_src = register_autodoc_repl(env, env.docname, body_text)
             attrs.append(f'replay-src="{replay_src}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
