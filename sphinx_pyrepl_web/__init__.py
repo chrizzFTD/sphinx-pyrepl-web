@@ -13,6 +13,7 @@ from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx import addnodes
 from sphinx.application import Sphinx
+from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
 
@@ -20,6 +21,7 @@ PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
 REPLAY_FILES_KEY = "pyrepl-replay-files"
 _DOCTEST_PARSER = DocTestParser()
+logger = logging.getLogger(__name__)
 
 
 def setup(app: Sphinx):
@@ -124,6 +126,7 @@ def _resolve_autodoc_bootstrap(
     if not module_name:
         return None, None
 
+    target = f"{module_name}.{fullname}" if fullname else module_name
     try:
         mod = sys.modules.get(module_name)
         if mod is None:
@@ -140,7 +143,12 @@ def _resolve_autodoc_bootstrap(
             return register_startup_file(env, docname, source_path), None
         except ValueError:
             return None, module_name.split(".")[0]
-    except (AttributeError, ImportError, OSError, TypeError):
+    except (AttributeError, ImportError, OSError, TypeError) as exc:
+        logger.error(
+            "Could not bootstrap autodoc REPL for %s: %s",
+            target,
+            exc,
+        )
         return None, None
 
 

@@ -1,8 +1,12 @@
 import json
+import logging
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from sphinx.application import Sphinx
+
+from sphinx_pyrepl_web import _resolve_autodoc_bootstrap
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -70,6 +74,9 @@ pyrepl_doctest_blocks = "autodoc"
     replay_files = json.loads(
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
+    assert list(replay_files) == ["index-1.py"]
+
+
     assert list(replay_files) == ["index-1.py"]
 
 
@@ -148,3 +155,33 @@ pyrepl_doctest_blocks = "autodoc"
     assert len(replay_files) == 1
     script = next(iter(replay_files.values()))
     assert script == "w = Widget()\n\nw.label\n"
+
+
+def test_bootstrap_failure_logs_error(caplog):
+    caplog.set_level(logging.ERROR, logger="sphinx_pyrepl_web")
+
+    app = MagicMock()
+    app.config.pyrepl_autodoc_bootstrap = True
+
+    env = MagicMock()
+    env.srcdir = "/tmp/docs"
+    env.metadata = {"index": {}}
+    env.note_dependency = MagicMock()
+
+    sig = MagicMock()
+    sig.get.side_effect = lambda key, default=None: {
+        "module": "nonexistent_bootstrap_mod_xyz",
+        "fullname": "missing",
+    }.get(key, default)
+
+    desc = MagicMock()
+    desc.next_node.return_value = sig
+
+    result = _resolve_autodoc_bootstrap(app, env, "index", desc)
+
+    assert result == (None, None)
+    assert any(
+        "Could not bootstrap autodoc REPL for nonexistent_bootstrap_mod_xyz.missing"
+        in record.message
+        for record in caplog.records
+    )
