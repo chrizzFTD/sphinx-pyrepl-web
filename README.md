@@ -73,7 +73,7 @@ pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc R
 
 ### Docstring conversion
 
-Doctest examples in docstrings can be converted into a REPL at build time when you opt in with `sphinx.ext.autodoc`:
+Converting doctest examples from docstrings into a REPL is opt-in with `sphinx.ext.autodoc`:
 
 ```python
 # conf.py
