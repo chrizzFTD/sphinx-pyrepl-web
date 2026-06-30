@@ -1,1 +1,1 @@
-cursor/resolve-package-urls-0bbd@c21baf4d73d347181d346b1db30384540e80ee5b
+cursor/resolve-package-urls-0bbd@1d95c619c6251475f41ea20eec631c45903b1498
