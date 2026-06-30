@@ -18,6 +18,7 @@ extensions = [
     "sphinx_pyrepl_web",
 ]
 pyrepl_doctest_blocks = "autodoc"
+html_static_path = ["_static"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_sidebars = {

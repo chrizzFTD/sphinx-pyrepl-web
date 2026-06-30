@@ -51,7 +51,7 @@ All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attrib
 | Option | Description |
 |--------|-------------|
 | `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`) |
-| `:packages:` | Comma-separated PyPI packages to preload |
+| `:packages:` | Comma-separated PyPI packages or local wheel paths under `_static/wheels/` |
 | `:repl-title:` | Title in the REPL header |
 | `:src:` | Path to a Python startup script |
 | `:replay:` | Replay `:src:` with interactive prompts instead of silent load |
@@ -95,6 +95,40 @@ pyrepl_doctest_blocks = "autodoc"
 |------------------|------------------------------------------------------------------------------|
 | `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:` only |
 | `False`          | Replay doctest input only; documented names are not pre-defined              |
+
+### Local Pyodide wheels
+
+Preload a wheel built for Pyodide (for example a wasm extension or an unreleased
+branch build) by placing it under the Sphinx static path and referencing it from
+``:packages:``. Ensure ``html_static_path`` includes ``"_static"``:
+
+```python
+# conf.py
+html_static_path = ["_static"]
+```
+
+```rst
+.. py-repl::
+   :packages: _static/wheels/myext-pyodide.whl
+   :src: _static/bootstrap.py
+   :no-banner:
+
+   >>> import myext
+   >>> myext.ping()
+```
+
+Wheels under ``_static/`` are copied into the HTML output when ``_static`` is listed
+in ``html_static_path`` (Sphinx does not copy project static files automatically
+unless configured). At runtime, [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)
+resolves site-relative wheel paths to absolute URLs before calling
+``micropip.install()``.
+
+**CI tip:** copy each build artifact to a stable docs filename so RST does not
+need updating per release, for example
+``cp dist/myext-1.2.3-*.whl docs/_static/wheels/myext-pyodide.whl``.
+
+Ensure the web server serves ``.whl`` files with MIME type ``application/zip``
+(Read the Docs does this by default).
 
 ## Updating pyrepl-web
 

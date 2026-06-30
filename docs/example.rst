@@ -141,3 +141,28 @@ RST content:
 Rendered result:
 
 .. autofunction:: autodoc_demo.example_generator
+
+Local Pyodide wheels
+--------------------
+
+Preload a Pyodide-compatible wheel from ``_static/wheels/`` via ``:packages:``.
+Combine with ``:src:`` for optional post-install bootstrap and a doctest replay
+body:
+
+.. code-block:: rst
+
+   .. py-repl::
+      :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+      :no-header:
+      :no-banner:
+
+      >>> import pyrepl_test_pkg
+      >>> pyrepl_test_pkg.ping()
+
+.. py-repl::
+   :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+   :no-header:
+   :no-banner:
+
+   >>> import pyrepl_test_pkg
+   >>> pyrepl_test_pkg.ping()
