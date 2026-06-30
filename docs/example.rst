@@ -124,8 +124,8 @@ Autodoc
 -------
 
 The documented module's source is loaded in advance before replay, so
-module members are available in the REPL namespace. Modules under the Sphinx
-source tree use silent ``:src:``; installed packages use ``packages=``.
+module members are available in the REPL namespace when the module lives
+under the Sphinx source tree (silent ``:src:``).
 
 Source module:
 

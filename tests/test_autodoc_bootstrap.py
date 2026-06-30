@@ -80,7 +80,7 @@ pyrepl_doctest_blocks = "autodoc"
     assert list(replay_files) == ["index-1.py"]
 
 
-def test_autodoc_bootstrap_uses_packages_for_installed_module(tmp_path):
+def test_autodoc_bootstrap_skips_installed_module(tmp_path):
     pkg_dir = tmp_path / "installed_pkg"
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text(
@@ -143,10 +143,10 @@ pyrepl_doctest_blocks = "autodoc"
         app.build()
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
-    assert 'packages="installed_pkg"' in html
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
     assert "<py-repl" in html
     pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
+    assert 'packages="' not in pyrepl_tag
     assert ' src="' not in pyrepl_tag
 
     replay_files = json.loads(

@@ -93,7 +93,7 @@ pyrepl_doctest_blocks = "autodoc"
 
 |                  | `pyrepl_autodoc_bootstrap` options                                           |
 |------------------|------------------------------------------------------------------------------|
-| `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:`, packages via `packages=` |
+| `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:` only |
 | `False`          | Replay doctest input only; documented names are not pre-defined              |
 
 ## Updating pyrepl-web

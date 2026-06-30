@@ -103,7 +103,7 @@ def test_autodoc_doctest_becomes_pyrepl(autodoc_project):
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert f'replay-src="_static/pyrepl/{script_name}"' in html
-    assert 'packages="repl_test_demo"' in html
+    assert 'packages="' not in html
     assert "no-header" in html
     assert "no-banner" in html
 

@@ -113,7 +113,12 @@ def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
 def _resolve_autodoc_bootstrap(
     app: Sphinx, env, docname: str, desc: addnodes.desc
 ) -> tuple[str | None, str | None]:
-    """Return (startup src path, packages) for autodoc REPLs."""
+    """Return (startup src path, packages) for autodoc REPLs.
+
+    Only modules whose source lives under the Sphinx source directory are
+    bootstrapped via silent ``:src:``. Installed or out-of-tree modules are
+    left without bootstrap; use explicit ``:packages:`` wheel paths instead.
+    """
     if not app.config.pyrepl_autodoc_bootstrap:
         return None, None
 
@@ -142,7 +147,7 @@ def _resolve_autodoc_bootstrap(
             source_path.relative_to(srcdir)
             return register_startup_file(env, docname, source_path), None
         except ValueError:
-            return None, module_name.split(".")[0]
+            return None, None
     except (AttributeError, ImportError, OSError, TypeError) as exc:
         logger.error(
             "Could not bootstrap autodoc REPL for %s: %s",
