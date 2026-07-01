@@ -2,12 +2,9 @@
 
 __version__ = "0.2.0"
 
-import importlib
-import inspect
 import json
 from doctest import DocTestParser
 from pathlib import Path
-import sys
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -28,7 +25,7 @@ def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
     app.add_config_value("pyrepl_doctest_blocks", False, "env")
-    app.add_config_value("pyrepl_autodoc_bootstrap", True, "env")
+    app.add_config_value("pyrepl_autodoc_packages", None, "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
     app.connect("doctree-read", transform_doctest_blocks)
@@ -110,51 +107,9 @@ def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
     return None
 
 
-def _resolve_autodoc_bootstrap(
-    app: Sphinx, env, docname: str, desc: addnodes.desc
-) -> tuple[str | None, str | None]:
-    """Return (startup src path, packages) for autodoc REPLs.
-
-    Only modules whose source lives under the Sphinx source directory are
-    bootstrapped via silent ``:src:``. Installed or out-of-tree modules are
-    left without bootstrap; use explicit ``:packages:`` wheel paths instead.
-    """
-    if not app.config.pyrepl_autodoc_bootstrap:
-        return None, None
-
-    sig = desc.next_node(addnodes.desc_signature)
-    if sig is None:
-        return None, None
-
-    module_name = sig.get("module")
-    fullname = sig.get("fullname")
-    if not module_name:
-        return None, None
-
-    target = f"{module_name}.{fullname}" if fullname else module_name
-    try:
-        mod = sys.modules.get(module_name)
-        if mod is None:
-            mod = importlib.import_module(module_name)
-        obj = mod
-        if fullname:
-            for part in fullname.split("."):
-                obj = getattr(obj, part)
-        mod_obj = inspect.getmodule(obj) or mod
-        source_path = Path(inspect.getfile(mod_obj)).resolve()
-        srcdir = Path(env.srcdir).resolve()
-        try:
-            source_path.relative_to(srcdir)
-            return register_startup_file(env, docname, source_path), None
-        except ValueError:
-            return None, None
-    except (AttributeError, ImportError, OSError, TypeError) as exc:
-        logger.error(
-            "Could not bootstrap autodoc REPL for %s: %s",
-            target,
-            exc,
-        )
-        return None, None
+def _autodoc_packages(app: Sphinx) -> str | None:
+    """Return configured package preload for autodoc doctest REPLs."""
+    return app.config.pyrepl_autodoc_packages or None
 
 
 def _inside_autodoc_desc(node: nodes.Node) -> bool:
@@ -177,15 +132,11 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
         source = doctest_to_replay_source(node.astext())
         if not source.strip():
             continue
-        bootstrap_src = None
         packages = None
-        desc = _find_autodoc_desc(node)
-        if desc is not None:
-            bootstrap_src, packages = _resolve_autodoc_bootstrap(
-                app, env, docname, desc
-            )
+        if _find_autodoc_desc(node) is not None:
+            packages = _autodoc_packages(app)
         replay_src = register_autodoc_repl(env, docname, source)
-        node.replace_self(make_pyrepl_raw(replay_src, bootstrap_src, packages))
+        node.replace_self(make_pyrepl_raw(replay_src, packages=packages))
         replaced = True
 
     if replaced:

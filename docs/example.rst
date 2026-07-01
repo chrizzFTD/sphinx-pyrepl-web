@@ -123,31 +123,40 @@ Rendered result:
 Autodoc
 -------
 
-The documented module's source is loaded in advance before replay, so
-module members are available in the REPL namespace when the module lives
-under the Sphinx source tree (silent ``:src:``).
+When ``pyrepl_doctest_blocks = "autodoc"``, doctest examples in documented
+APIs become interactive REPLs. Set ``pyrepl_autodoc_packages`` to preload the
+documented package from a Pyodide-compatible wheel (or PyPI name) before
+replay:
+
+.. code-block:: python
+
+   # conf.py
+   html_static_path = ["_static"]
+   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+
+Autodoc still imports the package on the host at build time (for example via
+``pip install -e ".[docs]"`` in this repository).
 
 Source module:
 
-.. literalinclude:: _static/autodoc_demo.py
+.. literalinclude:: ../../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
    :language: python
 
 RST content:
 
 .. code-block:: rst
 
-   .. autofunction:: autodoc_demo.example_generator
+   .. autofunction:: pyrepl_test_pkg.demo.example_generator
 
 Rendered result:
 
-.. autofunction:: autodoc_demo.example_generator
+.. autofunction:: pyrepl_test_pkg.demo.example_generator
 
 Local Pyodide wheels
 --------------------
 
-Preload a Pyodide-compatible wheel from ``_static/wheels/`` via ``:packages:``.
-Combine with ``:src:`` for optional post-install bootstrap and a doctest replay
-body:
+The same wheel can be referenced manually from ``.. py-repl::`` when you want
+a standalone REPL without autodoc:
 
 .. code-block:: rst
 

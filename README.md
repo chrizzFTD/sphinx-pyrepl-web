@@ -68,7 +68,7 @@ Optional Sphinx config:
 ```python
 pyrepl_js = "../pyrepl.js"  # default; path to the pyrepl-web loader script
 pyrepl_doctest_blocks = False  # default; see Docstring conversion below
-pyrepl_autodoc_bootstrap = True  # default; silent :src: bootstrap for autodoc REPLs
+pyrepl_autodoc_packages = None  # optional; wheel path or PyPI name for autodoc REPLs
 ```
 
 ### Docstring conversion
@@ -82,6 +82,7 @@ extensions = [
     "sphinx_pyrepl_web",
 ]
 pyrepl_doctest_blocks = "autodoc"
+pyrepl_autodoc_packages = "_static/wheels/my_package-1.0.0-py3-none-any.whl"
 ```
 
 |                   | `pyrepl_doctest_blocks` options     |
@@ -91,10 +92,23 @@ pyrepl_doctest_blocks = "autodoc"
 | `"all"`           | Transform every doctest block found |
 
 
-|                  | `pyrepl_autodoc_bootstrap` options                                           |
-|------------------|------------------------------------------------------------------------------|
-| `True` (default) | Bootstrap REPL: in-tree modules via silent `:src:` only |
-| `False`          | Replay doctest input only; documented names are not pre-defined              |
+|                         | `pyrepl_autodoc_packages` options                                |
+|-------------------------|------------------------------------------------------------------|
+| unset / `None` / `""`   | Replay doctest input only                                        |
+| wheel path or PyPI name | Preload the documented package before replay (comma-separated)   |
+
+Autodoc integration assumes a single documented package. The wheel (or PyPI
+name) preloads it in the browser REPL; autodoc still imports the package on
+the host at build time.
+
+To build this project's docs locally:
+
+```bash
+pip install -e ".[docs]"
+```
+
+The `[docs]` extra installs doc build dependencies plus the `pyrepl_test_pkg`
+fixture used in the examples.
 
 ### Local Pyodide wheels
 

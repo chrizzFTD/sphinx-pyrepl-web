@@ -37,6 +37,7 @@ test = [
 ]
 docs = [
     "myst-parser",
+    "pyrepl_test_pkg @ file:./tests/fixtures/pyrepl_test_pkg",
 ]
 
 [tool.pytest.ini_options]

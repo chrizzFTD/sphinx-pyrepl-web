@@ -1,53 +1,22 @@
 import json
-import logging
+import shutil
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
 from sphinx.application import Sphinx
 
-from sphinx_pyrepl_web import _resolve_autodoc_bootstrap
+from sphinx_pyrepl_web import _autodoc_packages
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+WHEEL_NAME = "pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+WHEEL_PATH = f"_static/wheels/{WHEEL_NAME}"
+
 sys.path.insert(0, str(ROOT))
 
 
-def test_autodoc_bootstrap_uses_srcdir_module(tmp_path):
-    srcdir = tmp_path / "docs"
-    srcdir.mkdir()
-    (srcdir / "_static").mkdir()
-    (srcdir / "_static" / "demo.py").write_text(
-        '''
-def greet():
-    """Say hello.
-
-    Examples:
-        >>> greet()
-        'hi'
-
-    """
-    return "hi"
-'''.strip()
-        + "\n",
-        encoding="utf-8",
-    )
-    outdir = tmp_path / "_build"
-    doctreedir = tmp_path / "_doctree"
-
-    (srcdir / "conf.py").write_text(
-        """
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent / "_static"))
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
-master_doc = "index"
-pyrepl_js = "pyrepl.js"
-pyrepl_doctest_blocks = "autodoc"
-""",
-        encoding="utf-8",
-    )
-    (srcdir / "index.rst").write_text(".. autofunction:: demo.greet\n", encoding="utf-8")
-
+def _build_sphinx(srcdir: Path, outdir: Path, doctreedir: Path) -> Sphinx:
     outdir.mkdir(parents=True, exist_ok=True)
     doctreedir.mkdir(parents=True, exist_ok=True)
     with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
@@ -61,12 +30,50 @@ pyrepl_doctest_blocks = "autodoc"
             freshenv=True,
         )
         app.build()
+    return app
+
+
+def _wheel_conf_extra() -> str:
+    return f"""
+html_static_path = ["_static"]
+pyrepl_autodoc_packages = {WHEEL_PATH!r}
+"""
+
+
+def test_autodoc_packages_emits_configured_wheel(tmp_path):
+    wheels_dir = tmp_path / "docs" / "_static" / "wheels"
+    wheels_dir.mkdir(parents=True)
+    shutil.copy2(FIXTURES / "wheels" / WHEEL_NAME, wheels_dir / WHEEL_NAME)
+
+    srcdir = tmp_path / "docs"
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+
+    (srcdir / "conf.py").write_text(
+        f"""
+import sys
+sys.path.insert(0, {str(FIXTURES / "pyrepl_test_pkg")!r})
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
+master_doc = "index"
+pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
+{_wheel_conf_extra()}
+""",
+        encoding="utf-8",
+    )
+    (srcdir / "index.rst").write_text(
+        ".. autofunction:: pyrepl_test_pkg.demo.example_generator\n",
+        encoding="utf-8",
+    )
+
+    app = _build_sphinx(srcdir, outdir, doctreedir)
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
-    assert 'src="_static/demo.py"' in html
+    assert f'packages="{WHEEL_PATH}"' in html
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
-    assert "pyrepl.js" in html
-    assert (outdir / "_static" / "demo.py").is_file()
+    pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
+    assert ' src="' not in pyrepl_tag
+    assert (outdir / "_static" / "wheels" / WHEEL_NAME).is_file()
 
     doctree = app.env.get_doctree("index")
     assert doctree.get("pyrepl")
@@ -77,17 +84,12 @@ pyrepl_doctest_blocks = "autodoc"
     assert list(replay_files) == ["index-1.py"]
 
 
-    assert list(replay_files) == ["index-1.py"]
-
-
-def test_autodoc_bootstrap_skips_installed_module(tmp_path):
+def test_autodoc_packages_for_out_of_tree_module(tmp_path):
     pkg_dir = tmp_path / "installed_pkg"
     pkg_dir.mkdir()
     (pkg_dir / "__init__.py").write_text(
         '''
-from .core import Widget as _Widget
-
-class Widget(_Widget):
+class Widget:
     """A demo widget.
 
     Example:
@@ -96,14 +98,57 @@ class Widget(_Widget):
         'ready'
 
     """
-    pass
+    label = "ready"
 '''.strip()
         + "\n",
         encoding="utf-8",
     )
-    (pkg_dir / "core.py").write_text(
+
+    wheels_dir = tmp_path / "docs" / "_static" / "wheels"
+    wheels_dir.mkdir(parents=True)
+    shutil.copy2(FIXTURES / "wheels" / WHEEL_NAME, wheels_dir / WHEEL_NAME)
+
+    srcdir = tmp_path / "docs"
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+
+    (srcdir / "conf.py").write_text(
+        f"""
+import sys
+sys.path.insert(0, {str(pkg_dir.parent)!r})
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon", "sphinx_pyrepl_web"]
+master_doc = "index"
+pyrepl_js = "pyrepl.js"
+pyrepl_doctest_blocks = "autodoc"
+{_wheel_conf_extra()}
+""",
+        encoding="utf-8",
+    )
+    (srcdir / "index.rst").write_text(".. autoclass:: installed_pkg.Widget\n", encoding="utf-8")
+
+    _build_sphinx(srcdir, outdir, doctreedir)
+
+    html = (outdir / "index.html").read_text(encoding="utf-8")
+    assert f'packages="{WHEEL_PATH}"' in html
+    assert 'replay-src="_static/pyrepl/index-1.py"' in html
+    pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
+    assert ' src="' not in pyrepl_tag
+
+
+def test_autodoc_without_packages_is_replay_only(tmp_path):
+    pkg_dir = tmp_path / "installed_pkg"
+    pkg_dir.mkdir()
+    (pkg_dir / "__init__.py").write_text(
         '''
 class Widget:
+    """A demo widget.
+
+    Example:
+        >>> w = Widget()
+        >>> w.label
+        'ready'
+
+    """
     label = "ready"
 '''.strip()
         + "\n",
@@ -128,60 +173,22 @@ pyrepl_doctest_blocks = "autodoc"
     )
     (srcdir / "index.rst").write_text(".. autoclass:: installed_pkg.Widget\n", encoding="utf-8")
 
-    outdir.mkdir(parents=True, exist_ok=True)
-    doctreedir.mkdir(parents=True, exist_ok=True)
-    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
-        app = Sphinx(
-            srcdir=str(srcdir),
-            confdir=str(srcdir),
-            outdir=str(outdir),
-            doctreedir=str(doctreedir),
-            buildername="html",
-            warning=warning_file,
-            freshenv=True,
-        )
-        app.build()
+    _build_sphinx(srcdir, outdir, doctreedir)
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
-    assert "<py-repl" in html
     pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
     assert 'packages="' not in pyrepl_tag
     assert ' src="' not in pyrepl_tag
 
-    replay_files = json.loads(
-        app.env.metadata["index"].get("pyrepl-replay-files", "{}")
-    )
-    assert len(replay_files) == 1
-    script = next(iter(replay_files.values()))
-    assert script == "w = Widget()\n\nw.label\n"
 
-
-def test_bootstrap_failure_logs_error(caplog):
-    caplog.set_level(logging.ERROR, logger="sphinx_pyrepl_web")
-
+def test_autodoc_packages_config_helper():
     app = MagicMock()
-    app.config.pyrepl_autodoc_bootstrap = True
+    app.config.pyrepl_autodoc_packages = WHEEL_PATH
+    assert _autodoc_packages(app) == WHEEL_PATH
 
-    env = MagicMock()
-    env.srcdir = "/tmp/docs"
-    env.metadata = {"index": {}}
-    env.note_dependency = MagicMock()
+    app.config.pyrepl_autodoc_packages = ""
+    assert _autodoc_packages(app) is None
 
-    sig = MagicMock()
-    sig.get.side_effect = lambda key, default=None: {
-        "module": "nonexistent_bootstrap_mod_xyz",
-        "fullname": "missing",
-    }.get(key, default)
-
-    desc = MagicMock()
-    desc.next_node.return_value = sig
-
-    result = _resolve_autodoc_bootstrap(app, env, "index", desc)
-
-    assert result == (None, None)
-    assert any(
-        "Could not bootstrap autodoc REPL for nonexistent_bootstrap_mod_xyz.missing"
-        in record.message
-        for record in caplog.records
-    )
+    app.config.pyrepl_autodoc_packages = None
+    assert _autodoc_packages(app) is None
