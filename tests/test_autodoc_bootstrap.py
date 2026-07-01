@@ -72,7 +72,7 @@ pyrepl_doctest_blocks = "autodoc"
     assert f'packages="{WHEEL_PATH}"' in html
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
     pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
-    assert ' src="' not in pyrepl_tag
+    assert 'src="_static/pyrepl/index-1-bootstrap.py"' in pyrepl_tag
     assert (outdir / "_static" / "wheels" / WHEEL_NAME).is_file()
 
     doctree = app.env.get_doctree("index")
@@ -82,6 +82,18 @@ pyrepl_doctest_blocks = "autodoc"
         app.env.metadata["index"].get("pyrepl-replay-files", "{}")
     )
     assert list(replay_files) == ["index-1.py"]
+    assert replay_files["index-1.py"] == (
+        "print([i for i in example_generator(4)])\n"
+    )
+
+    bootstrap_files = json.loads(
+        app.env.metadata["index"].get("pyrepl-bootstrap-files", "{}")
+    )
+    assert list(bootstrap_files) == ["index-1-bootstrap.py"]
+    assert bootstrap_files["index-1-bootstrap.py"] == (
+        "from pyrepl_test_pkg.demo import example_generator\n"
+    )
+    assert (outdir / "_static" / "pyrepl" / "index-1-bootstrap.py").is_file()
 
 
 def test_autodoc_packages_for_out_of_tree_module(tmp_path):
@@ -126,13 +138,18 @@ pyrepl_doctest_blocks = "autodoc"
     )
     (srcdir / "index.rst").write_text(".. autoclass:: installed_pkg.Widget\n", encoding="utf-8")
 
-    _build_sphinx(srcdir, outdir, doctreedir)
+    app = _build_sphinx(srcdir, outdir, doctreedir)
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert f'packages="{WHEEL_PATH}"' in html
     assert 'replay-src="_static/pyrepl/index-1.py"' in html
     pyrepl_tag = html[html.index("<py-repl") : html.index("></py-repl>", html.index("<py-repl")) + len("></py-repl>")]
-    assert ' src="' not in pyrepl_tag
+    assert 'src="_static/pyrepl/index-1-bootstrap.py"' in pyrepl_tag
+
+    bootstrap_files = json.loads(
+        app.env.metadata["index"].get("pyrepl-bootstrap-files", "{}")
+    )
+    assert bootstrap_files["index-1-bootstrap.py"] == "from installed_pkg import Widget\n"
 
 
 def test_autodoc_without_packages_is_replay_only(tmp_path):

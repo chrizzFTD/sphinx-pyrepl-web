@@ -94,12 +94,13 @@ pyrepl_autodoc_packages = "_static/wheels/my_package-1.0.0-py3-none-any.whl"
 
 |                         | `pyrepl_autodoc_packages` options                                |
 |-------------------------|------------------------------------------------------------------|
-| unset / `None` / `""`   | Replay doctest input only                                        |
-| wheel path or PyPI name | Preload the documented package before replay (comma-separated)   |
+| unset / `None` / `""`   | Replay doctest input only (no wheel install or auto-import)      |
+| wheel path or PyPI name | Install the package and import the documented object before replay (comma-separated) |
 
 Autodoc integration assumes a single documented package. The wheel (or PyPI
-name) preloads it in the browser REPL; autodoc still imports the package on
-the host at build time.
+name) is installed in the browser REPL and the documented name is imported
+automatically so doctest examples can use unqualified names. Autodoc still
+imports the package on the host at build time.
 
 To build this project's docs locally:
 
