@@ -107,11 +107,14 @@ def autodoc_bootstrap_source(
 def make_pyrepl_raw(
     replay_src: str,
     packages: str | None = None,
+    src: str | None = None,
 ) -> nodes.raw:
     """Build a raw HTML node for an autodoc doctest replay widget."""
     attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
     if packages:
         attrs.insert(0, f'packages="{packages}"')
+    if src:
+        attrs.insert(0, f'src="{src}"')
     attr_str = " ".join(attrs)
     return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
 
