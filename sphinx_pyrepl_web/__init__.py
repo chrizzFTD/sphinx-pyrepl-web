@@ -104,31 +104,14 @@ def autodoc_bootstrap_source(
     return f"from {module} import {fullname}\n"
 
 
-def register_startup_file(env, docname: str, path: Path) -> str:
-    """Track a startup script under srcdir for copying into HTML output."""
-    env.note_dependency(path)
-    rel_src = path.relative_to(Path(env.srcdir)).as_posix()
-    startup_files = json.loads(
-        env.metadata[docname].setdefault(STARTUP_FILES_KEY, "[]")
-    )
-    abs_path = str(path.resolve())
-    if abs_path not in startup_files:
-        startup_files.append(abs_path)
-        env.metadata[docname][STARTUP_FILES_KEY] = json.dumps(startup_files)
-    return rel_src
-
-
 def make_pyrepl_raw(
     replay_src: str,
-    src: str | None = None,
     packages: str | None = None,
 ) -> nodes.raw:
     """Build a raw HTML node for an autodoc doctest replay widget."""
     attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
     if packages:
         attrs.insert(0, f'packages="{packages}"')
-    if src:
-        attrs.insert(0, f'src="{src}"')
     attr_str = " ".join(attrs)
     return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
 
