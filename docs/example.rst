@@ -124,9 +124,9 @@ Autodoc
 -------
 
 When ``pyrepl_doctest_blocks = "autodoc"``, doctest examples in documented
-APIs become interactive REPLs. Set ``pyrepl_autodoc_packages`` to preload the
-documented package from a Pyodide-compatible wheel (or PyPI name) before
-replay:
+APIs become interactive REPLs. Set ``pyrepl_autodoc_packages`` to install the
+documented package from a Pyodide-compatible wheel (or PyPI name) and
+automatically import the documented object before replay:
 
 .. code-block:: python
 

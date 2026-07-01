@@ -17,6 +17,7 @@ from sphinx.util.fileutil import copy_asset_file
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
 REPLAY_FILES_KEY = "pyrepl-replay-files"
+BOOTSTRAP_FILES_KEY = "pyrepl-bootstrap-files"
 _DOCTEST_PARSER = DocTestParser()
 logger = logging.getLogger(__name__)
 
@@ -56,8 +57,8 @@ def register_autodoc_repl(
     env,
     docname: str,
     replay_text: str,
-) -> str:
-    """Record a replay script in env metadata and return its replay-src path."""
+) -> tuple[str, str]:
+    """Record a replay script in env metadata and return (replay-src path, name)."""
     replay_files = json.loads(
         env.metadata[docname].setdefault(REPLAY_FILES_KEY, "{}")
     )
@@ -65,7 +66,42 @@ def register_autodoc_repl(
     replay_name = f"{docname.replace('/', '-')}-{counter}.py"
     replay_files[replay_name] = replay_text
     env.metadata[docname][REPLAY_FILES_KEY] = json.dumps(replay_files)
-    return f"_static/pyrepl/{replay_name}"
+    return f"_static/pyrepl/{replay_name}", replay_name
+
+
+def register_autodoc_bootstrap(
+    env,
+    docname: str,
+    bootstrap_text: str,
+    replay_name: str,
+) -> str:
+    """Record a silent bootstrap script paired with a replay file."""
+    bootstrap_files = json.loads(
+        env.metadata[docname].setdefault(BOOTSTRAP_FILES_KEY, "{}")
+    )
+    bootstrap_name = replay_name.replace(".py", "-bootstrap.py")
+    bootstrap_files[bootstrap_name] = bootstrap_text
+    env.metadata[docname][BOOTSTRAP_FILES_KEY] = json.dumps(bootstrap_files)
+    return f"_static/pyrepl/{bootstrap_name}"
+
+
+def autodoc_bootstrap_source(
+    module: str | None,
+    fullname: str | None,
+    objtype: str | None,
+) -> str | None:
+    """Return a silent import script for the documented autodoc object."""
+    if not module:
+        return None
+
+    if objtype == "module" or not fullname:
+        return f"import {module}\n"
+
+    if "." in fullname:
+        root = fullname.split(".", 1)[0]
+        return f"from {module} import {root}\n"
+
+    return f"from {module} import {fullname}\n"
 
 
 def register_startup_file(env, docname: str, path: Path) -> str:
@@ -133,10 +169,26 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
         if not source.strip():
             continue
         packages = None
-        if _find_autodoc_desc(node) is not None:
+        bootstrap_src = None
+        desc = _find_autodoc_desc(node)
+        if desc is not None:
             packages = _autodoc_packages(app)
-        replay_src = register_autodoc_repl(env, docname, source)
-        node.replace_self(make_pyrepl_raw(replay_src, packages=packages))
+        replay_src, replay_name = register_autodoc_repl(env, docname, source)
+        if desc is not None and packages:
+            sig = desc.next_node(addnodes.desc_signature)
+            if sig is not None:
+                bootstrap_text = autodoc_bootstrap_source(
+                    sig.get("module"),
+                    sig.get("fullname"),
+                    desc.get("objtype"),
+                )
+                if bootstrap_text:
+                    bootstrap_src = register_autodoc_bootstrap(
+                        env, docname, bootstrap_text, replay_name
+                    )
+        node.replace_self(
+            make_pyrepl_raw(replay_src, src=bootstrap_src, packages=packages)
+        )
         replaced = True
 
     if replaced:
@@ -209,7 +261,7 @@ class PyRepl(SphinxDirective):
 
         if has_body:
             body_text = doctest_to_replay_source(list(self.content))
-            replay_src = register_autodoc_repl(env, env.docname, body_text)
+            replay_src, _ = register_autodoc_repl(env, env.docname, body_text)
             attrs.append(f'replay-src="{replay_src}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
@@ -253,6 +305,12 @@ def copy_asset_files(app, _):
         replay_dest.mkdir(parents=True, exist_ok=True)
         for name, content in replay_files.items():
             (replay_dest / name).write_text(content, encoding="utf-8")
+
+        raw_bootstrap = metadata.get(BOOTSTRAP_FILES_KEY)
+        if raw_bootstrap:
+            bootstrap_files = json.loads(raw_bootstrap)
+            for name, content in bootstrap_files.items():
+                (replay_dest / name).write_text(content, encoding="utf-8")
 
     srcdir = Path(app.builder.srcdir)
     copied = set()
