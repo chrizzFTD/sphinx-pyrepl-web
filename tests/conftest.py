@@ -1,7 +1,5 @@
 """Shared pytest fixtures."""
 
-from pathlib import Path
-
 import pytest
 
 from support import (
@@ -12,21 +10,6 @@ from support import (
     copy_wheel_to,
     pyrepl_conf_header,
 )
-
-
-@pytest.fixture
-def html_builder(tmp_path):
-    """Sphinx HTML builder with index and nested api/module pages."""
-    srcdir = tmp_path / "docs"
-    srcdir.mkdir()
-    (srcdir / "conf.py").write_text("", encoding="utf-8")
-    (srcdir / "index.rst").write_text("Test\n====\n", encoding="utf-8")
-    (srcdir / "api").mkdir()
-    (srcdir / "api" / "module.rst").write_text("API\n===\n", encoding="utf-8")
-    outdir = tmp_path / "_build"
-    doctreedir = tmp_path / "_doctree"
-    app = build_sphinx(srcdir, outdir, doctreedir)
-    return app.builder
 
 
 @pytest.fixture

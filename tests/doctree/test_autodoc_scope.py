@@ -4,6 +4,26 @@ from sphinx_pytest.plugin import CreateDoctree
 from fixtures.sources import AUTODOC_SCOPE_RST, EXAMPLE_GENERATOR_SOURCE
 
 
+def _write_autodoc_conf(srcdir, scope) -> None:
+    scope_literal = repr(scope)
+    (srcdir / "conf.py").write_text(
+        f"""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx_pyrepl_web",
+]
+pyrepl_doctest_blocks = {scope_literal}
+pyrepl_js = "pyrepl.js"
+""".strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 @pytest.fixture
 def autodoc_doctree(sphinx_doctree: CreateDoctree):
     """Configure sphinx_doctree with an autodoc module and doctest scope RST."""
@@ -11,31 +31,14 @@ def autodoc_doctree(sphinx_doctree: CreateDoctree):
         EXAMPLE_GENERATOR_SOURCE,
         encoding="utf-8",
     )
-    sphinx_doctree.set_conf(
-        {
-            "extensions": [
-                "sphinx.ext.autodoc",
-                "sphinx.ext.napoleon",
-                "sphinx_pyrepl_web",
-            ],
-            "pyrepl_doctest_blocks": "autodoc",
-            "pyrepl_js": "pyrepl.js",
-        }
-    )
+    _write_autodoc_conf(sphinx_doctree.srcdir, "autodoc")
     sphinx_doctree.buildername = "html"
     return sphinx_doctree
 
 
-def count_pyrepl_nodes(doctree) -> int:
-    """Return the number of py-repl raw HTML nodes in a doctree."""
-    from docutils import nodes
-
-    count = 0
-    for node in doctree.traverse(nodes.raw):
-        text = node.astext()
-        if "<py-repl" in text:
-            count += 1
-    return count
+def count_pyrepl_nodes(result) -> int:
+    """Return the number of py-repl raw HTML nodes in a doctree result."""
+    return result.pformat().count("<py-repl")
 
 
 def test_autodoc_doctest_becomes_pyrepl(autodoc_doctree):
@@ -56,17 +59,12 @@ def test_autodoc_doctest_becomes_pyrepl(autodoc_doctree):
     ],
     ids=["autodoc-only", "all-doctests", "disabled"],
 )
-def test_doctest_scope(autodoc_doctree, scope, expected_count):
-    autodoc_doctree.set_conf(
-        {
-            "extensions": [
-                "sphinx.ext.autodoc",
-                "sphinx.ext.napoleon",
-                "sphinx_pyrepl_web",
-            ],
-            "pyrepl_doctest_blocks": scope,
-            "pyrepl_js": "pyrepl.js",
-        }
+def test_doctest_scope(sphinx_doctree, scope, expected_count):
+    (sphinx_doctree.srcdir / "repl_test_demo.py").write_text(
+        EXAMPLE_GENERATOR_SOURCE,
+        encoding="utf-8",
     )
-    result = autodoc_doctree(AUTODOC_SCOPE_RST)
+    _write_autodoc_conf(sphinx_doctree.srcdir, scope)
+    sphinx_doctree.buildername = "html"
+    result = sphinx_doctree(AUTODOC_SCOPE_RST)
     assert count_pyrepl_nodes(result) == expected_count
