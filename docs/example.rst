@@ -123,21 +123,55 @@ Rendered result:
 Autodoc
 -------
 
-The documented module's source is loaded in advance before replay, so
-module members are available in the REPL namespace. Modules under the Sphinx
-source tree use silent ``:src:``; installed packages use ``packages=``.
+When ``pyrepl_doctest_blocks = "autodoc"``, doctest examples in documented
+APIs become interactive REPLs. Set ``pyrepl_autodoc_packages`` to install the
+documented package from a Pyodide-compatible wheel (or PyPI name) and
+automatically import the documented object before replay:
+
+.. code-block:: python
+
+   # conf.py
+   html_static_path = ["_static"]
+   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+
+Autodoc still imports the package on the host at build time (for example via
+``pip install -e ".[docs]"`` in this repository).
 
 Source module:
 
-.. literalinclude:: _static/autodoc_demo.py
+.. literalinclude:: ../../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
    :language: python
 
 RST content:
 
 .. code-block:: rst
 
-   .. autofunction:: autodoc_demo.example_generator
+   .. autofunction:: pyrepl_test_pkg.demo.example_generator
 
 Rendered result:
 
-.. autofunction:: autodoc_demo.example_generator
+.. autofunction:: pyrepl_test_pkg.demo.example_generator
+
+Local Pyodide wheels
+--------------------
+
+The same wheel can be referenced manually from ``.. py-repl::`` when you want
+a standalone REPL without autodoc:
+
+.. code-block:: rst
+
+   .. py-repl::
+      :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+      :no-header:
+      :no-banner:
+
+      >>> import pyrepl_test_pkg
+      >>> pyrepl_test_pkg.ping()
+
+.. py-repl::
+   :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+   :no-header:
+   :no-banner:
+
+   >>> import pyrepl_test_pkg
+   >>> pyrepl_test_pkg.ping()
