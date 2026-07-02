@@ -34,7 +34,7 @@ def _is_file_like_path(path: str) -> bool:
     return "/" in path or path.endswith((".whl", ".py"))
 
 
-def asset_href(builder: Builder, docname: str, path: str) -> str:
+def _asset_href(builder: Builder, docname: str, path: str) -> str:
     """Rewrite a file path for the HTML page that will emit it."""
     if not _is_file_like_path(path):
         return path
@@ -43,10 +43,10 @@ def asset_href(builder: Builder, docname: str, path: str) -> str:
     return relative_uri(builder.get_target_uri(docname), path)
 
 
-def asset_href_packages(builder: Builder, docname: str, packages: str) -> str:
+def _asset_href_packages(builder: Builder, docname: str, packages: str) -> str:
     """Rewrite comma-separated package entries that refer to local files."""
     return ", ".join(
-        asset_href(builder, docname, part.strip()) for part in packages.split(",")
+        _asset_href(builder, docname, part.strip()) for part in packages.split(",")
     )
 
 
@@ -143,14 +143,14 @@ def make_pyrepl_raw(
     attrs = [
         "no-header",
         "no-banner",
-        f'replay-src="{asset_href(builder, docname, replay_src)}"',
+        f'replay-src="{_asset_href(builder, docname, replay_src)}"',
     ]
     if packages:
         attrs.insert(
-            0, f'packages="{asset_href_packages(builder, docname, packages)}"'
+            0, f'packages="{_asset_href_packages(builder, docname, packages)}"'
         )
     if src:
-        attrs.insert(0, f'src="{asset_href(builder, docname, src)}"')
+        attrs.insert(0, f'src="{_asset_href(builder, docname, src)}"')
     attr_str = " ".join(attrs)
     return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
 
@@ -251,7 +251,7 @@ class PyRepl(SphinxDirective):
             if option in self.options:
                 value = self.options[option]
                 if option == "packages":
-                    value = asset_href_packages(builder, docname, value)
+                    value = _asset_href_packages(builder, docname, value)
                 attrs.append(f'{attr}="{value}"')
 
         for flag in ("no-header", "no-buttons", "readonly", "no-banner"):
@@ -270,7 +270,7 @@ class PyRepl(SphinxDirective):
             except OSError as exc:
                 raise self.error(f"Could not read file: {exc}") from exc
             self.env.note_dependency(path)
-            rel_src = asset_href(
+            rel_src = _asset_href(
                 builder,
                 docname,
                 path.relative_to(Path(self.env.srcdir)).as_posix(),
@@ -294,7 +294,7 @@ class PyRepl(SphinxDirective):
         if has_body:
             body_text = doctest_to_replay_source(list(self.content))
             replay_src, _ = register_autodoc_repl(env, docname, body_text)
-            attrs.append(f'replay-src="{asset_href(builder, docname, replay_src)}"')
+            attrs.append(f'replay-src="{_asset_href(builder, docname, replay_src)}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
         attr_str = (" " + " ".join(attrs)) if attrs else ""
