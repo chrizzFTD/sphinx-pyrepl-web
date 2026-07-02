@@ -1,5 +1,5 @@
-from helpers import load_bootstrap_files, pyrepl_tag
-from support import (
+from tests.helpers import load_bootstrap_files, pyrepl_tag
+from tests.support import (
     FIXTURES,
     WHEEL_NAME,
     WHEEL_PATH,
@@ -44,7 +44,7 @@ def test_autodoc_with_packages_writes_bootstrap_and_wheel(tmp_path):
 
 
 def test_autodoc_without_packages_is_replay_only(tmp_path):
-    from fixtures.sources import WIDGET_SOURCE
+    from tests.fixtures.sources import WIDGET_SOURCE
 
     pkg_dir = tmp_path / "installed_pkg"
     pkg_dir.mkdir()

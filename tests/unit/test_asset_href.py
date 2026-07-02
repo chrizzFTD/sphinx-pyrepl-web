@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from helpers import mock_html_builder
+from tests.helpers import mock_html_builder
 from sphinx_pyrepl_web import _asset_href, _asset_href_packages
 
 

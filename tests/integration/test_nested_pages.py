@@ -1,4 +1,4 @@
-from support import WHEEL_PATH, build_sphinx, copy_wheel_to, pyrepl_conf_header
+from tests.support import WHEEL_PATH, build_sphinx, copy_wheel_to, pyrepl_conf_header
 
 
 def test_nested_page_emits_page_relative_static_paths(tmp_path):

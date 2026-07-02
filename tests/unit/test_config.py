@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from support import WHEEL_PATH
+from tests.support import WHEEL_PATH
 from sphinx_pyrepl_web import _autodoc_packages
 
 

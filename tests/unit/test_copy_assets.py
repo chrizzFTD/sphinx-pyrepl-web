@@ -4,14 +4,30 @@ from unittest.mock import MagicMock
 from docutils import nodes
 from docutils.utils import new_document
 
-from sphinx_pyrepl_web import REPLAY_FILES_KEY, copy_asset_files, transform_doctest_blocks
+from sphinx_pyrepl_web import PYREPL_DIR, REPLAY_FILES_KEY, copy_asset_files, transform_doctest_blocks
 
 
-def test_copy_asset_files_skips_non_html_builder():
+def test_copy_asset_files_skips_non_html_builder(tmp_path):
+    outdir = tmp_path / "out"
+    outdir.mkdir()
+
     app = MagicMock()
     app.builder.format = "latex"
+    app.builder.outdir = str(outdir)
+    app.env.metadata = {
+        "index": {
+            REPLAY_FILES_KEY: json.dumps({"index-1.py": "print('hi')\n"}),
+        }
+    }
+
     copy_asset_files(app, None)
-    app.builder.outdir.__truediv__.assert_not_called()
+
+    assert not any(outdir.iterdir())
+    assert not (outdir / "pyrepl.js").exists()
+    assert not (outdir / "_static").exists()
+    for asset in PYREPL_DIR.iterdir():
+        if asset.is_file():
+            assert not (outdir / asset.name).exists()
 
 
 def test_copy_asset_files_skips_empty_replay_metadata(tmp_path):

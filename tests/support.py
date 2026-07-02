@@ -1,7 +1,6 @@
 """Shared constants and Sphinx project setup helpers."""
 
 import shutil
-import sys
 from pathlib import Path
 
 from sphinx.application import Sphinx
@@ -10,8 +9,6 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 WHEEL_NAME = "pyrepl_test_pkg-1.0.0-py3-none-any.whl"
 WHEEL_PATH = f"_static/wheels/{WHEEL_NAME}"
-
-sys.path.insert(0, str(ROOT))
 
 
 def build_sphinx(

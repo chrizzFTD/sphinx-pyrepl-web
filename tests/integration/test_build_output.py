@@ -1,5 +1,5 @@
-from helpers import assert_replay_artifacts
-from support import WHEEL_NAME, WHEEL_PATH, build_sphinx
+from tests.helpers import assert_replay_artifacts
+from tests.support import WHEEL_NAME, WHEEL_PATH, build_sphinx
 
 from sphinx_pyrepl_web import PYREPL_DIR
 

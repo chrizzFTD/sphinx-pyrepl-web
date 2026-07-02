@@ -1,7 +1,7 @@
 import pytest
 from sphinx_pytest.plugin import CreateDoctree
 
-from fixtures.sources import AUTODOC_SCOPE_RST, EXAMPLE_GENERATOR_SOURCE
+from tests.fixtures.sources import AUTODOC_SCOPE_RST, EXAMPLE_GENERATOR_SOURCE
 
 
 def _write_autodoc_conf(srcdir, scope) -> None:

@@ -1,7 +1,7 @@
 import pytest
 
-from helpers import assert_replay_artifacts
-from support import build_sphinx
+from tests.helpers import assert_replay_artifacts
+from tests.support import build_sphinx
 
 
 @pytest.fixture
