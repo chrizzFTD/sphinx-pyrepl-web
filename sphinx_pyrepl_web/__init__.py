@@ -10,9 +10,11 @@ from docutils import nodes
 from docutils.parsers.rst import directives
 from sphinx import addnodes
 from sphinx.application import Sphinx
+from sphinx.builders import Builder
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
+from sphinx.util.osutil import relative_uri
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
@@ -20,6 +22,32 @@ REPLAY_FILES_KEY = "pyrepl-replay-files"
 BOOTSTRAP_FILES_KEY = "pyrepl-bootstrap-files"
 _DOCTEST_PARSER = DocTestParser()
 logger = logging.getLogger(__name__)
+_ABSOLUTE_PATH_PREFIXES = ("/", "http://", "https://", "emfs:")
+
+
+def _is_file_like_path(path: str) -> bool:
+    """Return True if *path* should be rewritten as a page-relative asset URL."""
+    if path.startswith(_ABSOLUTE_PATH_PREFIXES):
+        return False
+    if " @ " in path:
+        return False
+    return "/" in path or path.endswith((".whl", ".py"))
+
+
+def _asset_href(builder: Builder, docname: str, path: str) -> str:
+    """Rewrite a file path for the HTML page that will emit it."""
+    if not _is_file_like_path(path):
+        return path
+    if builder.format != "html":
+        return path
+    return relative_uri(builder.get_target_uri(docname), path)
+
+
+def _asset_href_packages(builder: Builder, docname: str, packages: str) -> str:
+    """Rewrite comma-separated package entries that refer to local files."""
+    return ", ".join(
+        _asset_href(builder, docname, part.strip()) for part in packages.split(",")
+    )
 
 
 def setup(app: Sphinx):
@@ -105,16 +133,24 @@ def autodoc_bootstrap_source(
 
 
 def make_pyrepl_raw(
+    builder: Builder,
+    docname: str,
     replay_src: str,
     packages: str | None = None,
     src: str | None = None,
 ) -> nodes.raw:
     """Build a raw HTML node for an autodoc doctest replay widget."""
-    attrs = ["no-header", "no-banner", f'replay-src="{replay_src}"']
+    attrs = [
+        "no-header",
+        "no-banner",
+        f'replay-src="{_asset_href(builder, docname, replay_src)}"',
+    ]
     if packages:
-        attrs.insert(0, f'packages="{packages}"')
+        attrs.insert(
+            0, f'packages="{_asset_href_packages(builder, docname, packages)}"'
+        )
     if src:
-        attrs.insert(0, f'src="{src}"')
+        attrs.insert(0, f'src="{_asset_href(builder, docname, src)}"')
     attr_str = " ".join(attrs)
     return nodes.raw("", f"<py-repl {attr_str}></py-repl>\n", format="html")
 
@@ -173,7 +209,9 @@ def transform_doctest_blocks(app: Sphinx, doctree: nodes.document):
                         env, docname, bootstrap_text, replay_name
                     )
         node.replace_self(
-            make_pyrepl_raw(replay_src, src=bootstrap_src, packages=packages)
+            make_pyrepl_raw(
+                app.builder, docname, replay_src, src=bootstrap_src, packages=packages
+            )
         )
         replaced = True
 
@@ -201,6 +239,8 @@ class PyRepl(SphinxDirective):
 
     def run(self):
         env = self.env
+        builder = env._app.builder
+        docname = env.docname
         attrs: list[str] = []
 
         for option, attr in (
@@ -210,6 +250,8 @@ class PyRepl(SphinxDirective):
         ):
             if option in self.options:
                 value = self.options[option]
+                if option == "packages":
+                    value = _asset_href_packages(builder, docname, value)
                 attrs.append(f'{attr}="{value}"')
 
         for flag in ("no-header", "no-buttons", "readonly", "no-banner"):
@@ -228,7 +270,11 @@ class PyRepl(SphinxDirective):
             except OSError as exc:
                 raise self.error(f"Could not read file: {exc}") from exc
             self.env.note_dependency(path)
-            rel_src = path.relative_to(Path(self.env.srcdir)).as_posix()
+            rel_src = _asset_href(
+                builder,
+                docname,
+                path.relative_to(Path(self.env.srcdir)).as_posix(),
+            )
             startup_files = json.loads(
                 self.env.metadata[self.env.docname].setdefault(
                     STARTUP_FILES_KEY, "[]"
@@ -247,8 +293,8 @@ class PyRepl(SphinxDirective):
 
         if has_body:
             body_text = doctest_to_replay_source(list(self.content))
-            replay_src, _ = register_autodoc_repl(env, env.docname, body_text)
-            attrs.append(f'replay-src="{replay_src}"')
+            replay_src, _ = register_autodoc_repl(env, docname, body_text)
+            attrs.append(f'replay-src="{_asset_href(builder, docname, replay_src)}"')
 
         self.env.metadata[self.env.docname]["pyrepl"] = True
         attr_str = (" " + " ".join(attrs)) if attrs else ""
