@@ -1,12 +1,7 @@
-import json
-import sys
-from pathlib import Path
-
 import pytest
-from sphinx.application import Sphinx
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+from tests.helpers import assert_replay_artifacts
+from tests.support import build_sphinx
 
 
 @pytest.fixture
@@ -18,7 +13,7 @@ def included_example_project(tmp_path):
     doctreedir = tmp_path / "_doctree"
 
     (srcdir / "conf.py").write_text(
-        f"""
+        """
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "_static"))
@@ -71,24 +66,9 @@ def example_generator(n):
 
 def test_included_example_writes_all_replay_scripts(included_example_project):
     srcdir, outdir, doctreedir = included_example_project
-    outdir.mkdir(parents=True, exist_ok=True)
-    doctreedir.mkdir(parents=True, exist_ok=True)
-    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
-        app = Sphinx(
-            srcdir=str(srcdir),
-            confdir=str(srcdir),
-            outdir=str(outdir),
-            doctreedir=str(doctreedir),
-            buildername="html",
-            warning=warning_file,
-            freshenv=True,
-        )
-        app.build()
+    app = build_sphinx(srcdir, outdir, doctreedir)
 
-    replay_files = json.loads(
-        app.env.metadata["index"].get("pyrepl-replay-files", "{}")
-    )
-    assert len(replay_files) == 2
+    replay_files = assert_replay_artifacts(app, outdir, "index", count=2)
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert html.count("replay-src=") == 2
