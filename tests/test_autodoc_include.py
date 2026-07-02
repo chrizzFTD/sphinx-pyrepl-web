@@ -91,10 +91,9 @@ def test_included_example_writes_all_replay_scripts(included_example_project):
     assert len(replay_files) == 2
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
-    assert 'src="_static/repl_include_demo.py"' in html
     assert html.count("replay-src=") == 2
+    assert 'src="_static/repl_include_demo.py"' not in html
 
     for script_name in replay_files:
         script_path = outdir / "_static" / "pyrepl" / script_name
         assert script_path.is_file(), f"missing replay script at {script_path}"
-    assert (outdir / "_static" / "repl_include_demo.py").is_file()
