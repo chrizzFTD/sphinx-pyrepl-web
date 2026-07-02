@@ -1,6 +1,8 @@
 from helpers import assert_replay_artifacts
 from support import WHEEL_NAME, WHEEL_PATH, build_sphinx
 
+from sphinx_pyrepl_web import PYREPL_DIR
+
 
 def test_build_writes_replay_script_from_metadata(sphinx_project):
     srcdir, outdir, doctreedir = sphinx_project
@@ -78,3 +80,46 @@ Example
     assert f'packages="{WHEEL_PATH}"' in html
     assert 'src="_static/bootstrap.py"' in html
     assert f'replay-src="_static/pyrepl/{script_name}"' in html
+
+
+def test_vendored_pyrepl_assets_copied(sphinx_project):
+    srcdir, outdir, doctreedir = sphinx_project
+    build_sphinx(srcdir, outdir, doctreedir)
+
+    copied = {path.name for path in PYREPL_DIR.iterdir() if path.is_file()}
+    assert copied
+    for name in copied:
+        assert (outdir / name).is_file(), f"missing vendored asset {name}"
+
+
+def test_startup_src_deduplicated_on_build(tmp_path):
+    srcdir = tmp_path / "docs"
+    srcdir.mkdir()
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+    (srcdir / "shared.py").write_text("print('shared')\n", encoding="utf-8")
+    (srcdir / "conf.py").write_text(
+        """
+extensions = ["sphinx_pyrepl_web"]
+master_doc = "index"
+pyrepl_js = "pyrepl.js"
+""",
+        encoding="utf-8",
+    )
+    (srcdir / "index.rst").write_text(
+        """
+Example
+=======
+
+.. py-repl::
+   :src: shared.py
+
+.. py-repl::
+   :src: shared.py
+""",
+        encoding="utf-8",
+    )
+
+    build_sphinx(srcdir, outdir, doctreedir)
+    assert (outdir / "shared.py").is_file()
+    assert (outdir / "shared.py").read_text(encoding="utf-8") == "print('shared')\n"

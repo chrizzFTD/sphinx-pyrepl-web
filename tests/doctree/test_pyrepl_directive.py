@@ -1,3 +1,4 @@
+import pytest
 from sphinx_pytest.plugin import CreateDoctree
 
 
@@ -50,3 +51,57 @@ def test_replay_file_flag(sphinx_doctree: CreateDoctree):
     html = result.pformat()
     assert 'src="demo.py"' in html
     assert "replay" in html
+
+
+@pytest.mark.parametrize(
+    "options,expected_fragments",
+    [
+        (":no-buttons:\n   :readonly:", ["no-buttons", "readonly"]),
+        (":repl-title: My REPL", ['repl-title="My REPL"']),
+    ],
+    ids=["flag-options", "repl-title"],
+)
+def test_pyrepl_directive_options(
+    sphinx_doctree: CreateDoctree, options, expected_fragments
+):
+    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"], "root_doc": "index"})
+    sphinx_doctree.buildername = "html"
+    (sphinx_doctree.srcdir / "demo.py").write_text("print('hi')\n", encoding="utf-8")
+    result = sphinx_doctree(
+        f"""
+.. py-repl::
+   {options}
+
+   >>> 1 + 1
+"""
+    )
+    html = result.pformat()
+    for fragment in expected_fragments:
+        assert fragment in html
+
+
+def test_silent_src_omitted_without_body(sphinx_doctree: CreateDoctree):
+    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"], "root_doc": "index"})
+    sphinx_doctree.buildername = "html"
+    (sphinx_doctree.srcdir / "demo.py").write_text("print('hi')\n", encoding="utf-8")
+    result = sphinx_doctree(
+        """
+.. py-repl::
+   :silent:
+   :src: demo.py
+"""
+    )
+    html = result.pformat()
+    assert 'src="demo.py"' not in html
+
+
+def test_missing_src_file_reports_error(sphinx_doctree: CreateDoctree):
+    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"]})
+    sphinx_doctree.buildername = "html"
+    result = sphinx_doctree(
+        """
+.. py-repl::
+   :src: missing.py
+"""
+    )
+    assert "Could not read file" in result.warnings
