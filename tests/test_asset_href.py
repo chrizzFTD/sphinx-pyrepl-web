@@ -1,0 +1,97 @@
+import shutil
+import sys
+from pathlib import Path
+
+import pytest
+from sphinx.application import Sphinx
+from unittest.mock import MagicMock
+
+from sphinx_pyrepl_web import asset_href, asset_href_packages
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+
+def _build_sphinx(srcdir: Path, outdir: Path, doctreedir: Path) -> Sphinx:
+    outdir.mkdir(parents=True, exist_ok=True)
+    doctreedir.mkdir(parents=True, exist_ok=True)
+    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
+        app = Sphinx(
+            srcdir=str(srcdir),
+            confdir=str(srcdir),
+            outdir=str(outdir),
+            doctreedir=str(doctreedir),
+            buildername="html",
+            warning=warning_file,
+            freshenv=True,
+        )
+        app.build()
+    return app
+
+
+@pytest.fixture
+def html_app(tmp_path):
+    srcdir = tmp_path / "docs"
+    srcdir.mkdir()
+    (srcdir / "conf.py").write_text("", encoding="utf-8")
+    (srcdir / "index.rst").write_text("Test\n====\n", encoding="utf-8")
+    (srcdir / "api").mkdir()
+    (srcdir / "api" / "module.rst").write_text("API\n===\n", encoding="utf-8")
+    outdir = tmp_path / "_build"
+    doctreedir = tmp_path / "_doctree"
+    return _build_sphinx(srcdir, outdir, doctreedir)
+
+
+def test_asset_href_rewrites_static_path_on_nested_page(html_app):
+    assert (
+        asset_href(html_app, "api/module", "_static/wheels/foo.whl")
+        == "../_static/wheels/foo.whl"
+    )
+
+
+def test_asset_href_leaves_root_page_static_path_unchanged(html_app):
+    assert (
+        asset_href(html_app, "index", "_static/wheels/foo.whl")
+        == "_static/wheels/foo.whl"
+    )
+
+
+def test_asset_href_leaves_root_absolute_path_unchanged(html_app):
+    assert (
+        asset_href(html_app, "api/module", "/_static/wheels/foo.whl")
+        == "/_static/wheels/foo.whl"
+    )
+
+
+def test_asset_href_leaves_https_url_unchanged(html_app):
+    url = "https://cdn.example/w.whl"
+    assert asset_href(html_app, "api/module", url) == url
+
+
+def test_asset_href_leaves_pypi_name_unchanged(html_app):
+    assert asset_href(html_app, "api/module", "numpy") == "numpy"
+
+
+def test_asset_href_rewrites_src_relative_to_source_root(html_app):
+    assert asset_href(html_app, "api/module", "demo.py") == "../demo.py"
+
+
+def test_asset_href_leaves_micropip_spec_unchanged(html_app):
+    spec = "mypkg @ https://example.com/wheels/mypkg.whl"
+    assert asset_href(html_app, "api/module", spec) == spec
+
+
+def test_asset_href_packages_rewrites_only_file_like_entries(html_app):
+    packages = "numpy, _static/wheels/foo.whl"
+    assert asset_href_packages(html_app, "api/module", packages) == (
+        "numpy, ../_static/wheels/foo.whl"
+    )
+
+
+def test_asset_href_skips_normalization_for_non_html_builder():
+    app = MagicMock()
+    app.builder.format = ""
+    assert (
+        asset_href(app, "api/module", "_static/wheels/foo.whl")
+        == "_static/wheels/foo.whl"
+    )
