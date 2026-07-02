@@ -1,61 +1,7 @@
-import json
-import shutil
-import sys
-from pathlib import Path
-
-import pytest
-from sphinx.application import Sphinx
 from sphinx_pytest.plugin import CreateDoctree
 
-ROOT = Path(__file__).resolve().parents[1]
-FIXTURES = Path(__file__).resolve().parent / "fixtures"
-WHEEL_NAME = "pyrepl_test_pkg-1.0.0-py3-none-any.whl"
-WHEEL_PATH = f"_static/wheels/{WHEEL_NAME}"
-
-sys.path.insert(0, str(ROOT))
-
-
-def _build_sphinx(srcdir: Path, outdir: Path, doctreedir: Path, **kwargs) -> Sphinx:
-    outdir.mkdir(parents=True, exist_ok=True)
-    doctreedir.mkdir(parents=True, exist_ok=True)
-    with open(outdir / "warnings.txt", "w", encoding="utf-8") as warning_file:
-        app = Sphinx(
-            srcdir=str(srcdir),
-            confdir=str(srcdir),
-            outdir=str(outdir),
-            doctreedir=str(doctreedir),
-            buildername="html",
-            warning=warning_file,
-            freshenv=True,
-            **kwargs,
-        )
-        app.build()
-    return app
-
-
-@pytest.fixture
-def wheel_project(tmp_path):
-    srcdir = tmp_path / "docs"
-    wheels_dir = srcdir / "_static" / "wheels"
-    wheels_dir.mkdir(parents=True)
-    shutil.copy2(FIXTURES / "wheels" / WHEEL_NAME, wheels_dir / WHEEL_NAME)
-    (srcdir / "_static" / "bootstrap.py").write_text(
-        "# Optional post-install bootstrap for local wheel REPLs.\n",
-        encoding="utf-8",
-    )
-
-    outdir = tmp_path / "_build"
-    doctreedir = tmp_path / "_doctree"
-    (srcdir / "conf.py").write_text(
-        """
-extensions = ["sphinx_pyrepl_web"]
-master_doc = "index"
-pyrepl_js = "pyrepl.js"
-html_static_path = ["_static"]
-""",
-        encoding="utf-8",
-    )
-    return srcdir, outdir, doctreedir
+from helpers import assert_replay_artifacts, load_replay_files
+from support import WHEEL_NAME, WHEEL_PATH, build_sphinx
 
 
 def test_local_wheel_packages_emitted_in_doctree(sphinx_doctree: CreateDoctree):
@@ -86,7 +32,7 @@ Example
         encoding="utf-8",
     )
 
-    _build_sphinx(srcdir, outdir, doctreedir)
+    build_sphinx(srcdir, outdir, doctreedir)
 
     wheel_out = outdir / "_static" / "wheels" / WHEEL_NAME
     assert wheel_out.is_file(), f"missing wheel at {wheel_out}"
@@ -115,17 +61,13 @@ Example
         encoding="utf-8",
     )
 
-    app = _build_sphinx(srcdir, outdir, doctreedir)
+    app = build_sphinx(srcdir, outdir, doctreedir)
 
     assert (outdir / "_static" / "wheels" / WHEEL_NAME).is_file()
     assert (outdir / "_static" / "bootstrap.py").is_file()
 
-    replay_files = json.loads(
-        app.env.metadata["index"].get("pyrepl-replay-files", "{}")
-    )
-    assert len(replay_files) == 1
+    replay_files = assert_replay_artifacts(app, outdir, "index", count=1)
     script_name = next(iter(replay_files))
-    assert (outdir / "_static" / "pyrepl" / script_name).is_file()
 
     html = (outdir / "index.html").read_text(encoding="utf-8")
     assert f'packages="{WHEEL_PATH}"' in html
