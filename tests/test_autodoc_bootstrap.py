@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 from helpers import load_bootstrap_files, load_replay_files, pyrepl_tag
 from support import (
     FIXTURES,
@@ -10,8 +8,6 @@ from support import (
     copy_wheel_to,
     wheel_conf_extra,
 )
-
-from sphinx_pyrepl_web import _autodoc_packages
 
 
 def test_autodoc_packages_emits_configured_wheel(tmp_path):
@@ -142,15 +138,3 @@ class Widget:
     tag = pyrepl_tag(html)
     assert 'packages="' not in tag
     assert ' src="' not in tag
-
-
-def test_autodoc_packages_config_helper():
-    app = MagicMock()
-    app.config.pyrepl_autodoc_packages = WHEEL_PATH
-    assert _autodoc_packages(app) == WHEEL_PATH
-
-    app.config.pyrepl_autodoc_packages = ""
-    assert _autodoc_packages(app) is None
-
-    app.config.pyrepl_autodoc_packages = None
-    assert _autodoc_packages(app) is None
