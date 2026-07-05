@@ -1,6 +1,6 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 import json
 from doctest import DocTestParser
