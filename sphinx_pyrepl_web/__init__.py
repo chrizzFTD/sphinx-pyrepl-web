@@ -234,7 +234,6 @@ class PyRepl(SphinxDirective):
         "readonly": directives.flag,
         "no-banner": directives.flag,
         "replay": directives.flag,
-        "silent": directives.flag,
     }
 
     def run(self):
@@ -260,7 +259,6 @@ class PyRepl(SphinxDirective):
 
         has_body = bool(self.content)
         force_replay = "replay" in self.options
-        force_silent = "silent" in self.options
 
         if "src" in self.options:
             _, abs_path = self.env.relfn2path(self.options["src"])
@@ -285,11 +283,9 @@ class PyRepl(SphinxDirective):
                 startup_files
             )
 
+            attrs.append(f'src="{rel_src}"')
             if force_replay and not has_body:
-                attrs.append(f'src="{rel_src}"')
                 attrs.append("replay")
-            elif not (force_silent and not has_body):
-                attrs.append(f'src="{rel_src}"')
 
         if has_body:
             body_text = doctest_to_replay_source(list(self.content))

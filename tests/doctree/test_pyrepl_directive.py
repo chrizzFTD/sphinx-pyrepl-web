@@ -80,21 +80,6 @@ def test_pyrepl_directive_options(
         assert fragment in html
 
 
-def test_silent_src_omitted_without_body(sphinx_doctree: CreateDoctree):
-    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"], "root_doc": "index"})
-    sphinx_doctree.buildername = "html"
-    (sphinx_doctree.srcdir / "demo.py").write_text("print('hi')\n", encoding="utf-8")
-    result = sphinx_doctree(
-        """
-.. py-repl::
-   :silent:
-   :src: demo.py
-"""
-    )
-    html = result.pformat()
-    assert 'src="demo.py"' not in html
-
-
 def test_missing_src_file_reports_error(sphinx_doctree: CreateDoctree):
     sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"]})
     sphinx_doctree.buildername = "html"

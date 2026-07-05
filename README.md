@@ -8,12 +8,6 @@ Sphinx extension to embed [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web) 
 pip install sphinx-pyrepl-web
 ```
 
-For development:
-
-```bash
-pip install -e ".[test,docs]"
-```
-
 ## Usage
 
 Add the extension to the target project's `conf.py`:
@@ -46,20 +40,19 @@ Embed a REPL with the `py-repl` directive:
 
 ### Directive options
 
-All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes, with the exception of `silent`: 
+All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attributes:
 
-| Option | Description |
-|--------|-------------|
-| `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`) |
-| `:packages:` | Comma-separated PyPI packages or local wheel paths under `_static/wheels/` |
-| `:repl-title:` | Title in the REPL header |
-| `:src:` | Path to a Python startup script |
+| Option | Description                                                    |
+|--------|----------------------------------------------------------------|
+| `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`)           |
+| `:packages:` | Comma-separated PyPI packages, URLs or relative wheel paths    |
+| `:repl-title:` | Title in the REPL header                                       |
+| `:src:` | Path to a Python startup script                                |
 | `:replay:` | Replay `:src:` with interactive prompts instead of silent load |
-| `:silent:` | Keep `:src:` silent even when combined with a directive body |
-| `:no-header:` | Hide the header bar |
-| `:no-buttons:` | Hide copy/clear buttons |
-| `:readonly:` | Disable input |
-| `:no-banner:` | Hide the Python version banner |
+| `:no-header:` | Hide the header bar                                            |
+| `:no-buttons:` | Hide copy/clear buttons                                        |
+| `:readonly:` | Disable input                                                  |
+| `:no-banner:` | Hide the Python version banner                                 |
 
 Python code within the `.. py-repl::` directive is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
 

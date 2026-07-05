@@ -79,7 +79,7 @@ Inline directive content should follow Doctest-style (``>>>`` / ``...``) and is 
    ...
    >>> Foo()
 
-Combine a silent bootstrap file with a visible replay body:
+Combine a startup script with a visible replay body:
 
 .. code-block:: rst
 
