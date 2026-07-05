@@ -58,7 +58,7 @@ All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attrib
 
 Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) conversion into pre-configured interactive REPLs
 
-#### pyrepl_doctest_blocks
+`pyrepl_doctest_blocks`:
 
 | Value             | Outcome                             |
 |-------------------|-------------------------------------|
@@ -66,7 +66,7 @@ Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) 
 | `"autodoc"`       | Convert doctest blocks from autodoc |
 | `"all"`           | Convert all doctest blocks          |
 
-#### pyrepl_autodoc_packages
+`pyrepl_autodoc_packages`:
 
 | Value                   | Outcome                                                            |
 |-------------------------|--------------------------------------------------------------------|

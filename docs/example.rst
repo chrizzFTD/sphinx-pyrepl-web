@@ -51,7 +51,7 @@ Rendered result:
 Replay session
 --------------
 
-Inline directive content should follow Doctest-style (``>>>`` / ``...``) and is used as replay prompts.
+Inline content should follow `doctest-style <https://docs.python.org/3/library/doctest.html>`_ (``>>>`` / ``...``) and is used as replay prompts.
 
 .. code-block:: rst
 
@@ -123,10 +123,8 @@ Rendered result:
 Autodoc
 -------
 
-When ``pyrepl_doctest_blocks = "autodoc"``, doctest examples in documented
-APIs become interactive REPLs. Set ``pyrepl_autodoc_packages`` to install the
-documented package from a Pyodide-compatible wheel (or PyPI name) and
-automatically import the documented object before replay:
+Use ``pyrepl_doctest_blocks = "autodoc"`` for interactive REPL examples.
+Set ``pyrepl_autodoc_packages`` to install the documented package and automatically import the documented object before replay:
 
 .. code-block:: python
 
@@ -134,12 +132,9 @@ automatically import the documented object before replay:
    html_static_path = ["_static"]
    pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
 
-Autodoc still imports the package on the host at build time (for example via
-``pip install -e ".[docs]"`` in this repository).
-
 Source module:
 
-.. literalinclude:: ../../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
+.. literalinclude:: ../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
    :language: python
 
 RST content:

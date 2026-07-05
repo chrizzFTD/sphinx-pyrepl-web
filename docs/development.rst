@@ -13,6 +13,25 @@ Clone the repository, then install in editable mode with test and docs dependenc
 The ``[docs]`` extra pulls in doc build dependencies and the ``pyrepl_test_pkg``
 fixture used in the examples.
 
+Build and preview docs
+----------------------
+
+Build HTML output from the ``docs/`` directory:
+
+.. code-block:: bash
+
+   python -m sphinx -b html docs docs/_build
+
+REPLs load JavaScript, replay scripts, and wheels with ``fetch``, so they do not
+work when you open ``index.html`` directly from disk (``file://`` URLs). Serve the
+build output over HTTP instead:
+
+.. code-block:: bash
+
+   python -m http.server --directory docs/_build
+
+Then open http://localhost:8000/ in a browser.
+
 Build-time behavior
 -------------------
 

@@ -53,7 +53,7 @@ def _asset_href_packages(builder: Builder, docname: str, packages: str) -> str:
 def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
-    app.add_config_value("pyrepl_doctest_blocks", False, "env")
+    app.add_config_value("pyrepl_doctest_blocks", False, "env", types=(bool, str))
     app.add_config_value("pyrepl_autodoc_packages", None, "env")
     app.add_directive("py-repl", PyRepl)
     app.connect("doctree-read", doctree_read)
