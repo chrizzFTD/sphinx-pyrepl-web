@@ -51,7 +51,7 @@ Rendered result:
 Replay session
 --------------
 
-Inline directive content should follow Doctest-style (``>>>`` / ``...``) and is used as replay prompts.
+Inline content should follow `doctest-style <https://docs.python.org/3/library/doctest.html>`_ (``>>>`` / ``...``) and is used as replay prompts.
 
 .. code-block:: rst
 
@@ -79,7 +79,7 @@ Inline directive content should follow Doctest-style (``>>>`` / ``...``) and is 
    ...
    >>> Foo()
 
-Combine a silent bootstrap file with a visible replay body:
+Combine a startup script with a visible replay body:
 
 .. code-block:: rst
 
@@ -120,24 +120,55 @@ Rendered result:
    :no-header:
    :no-banner:
 
+Local packages
+--------------
+
+Use static local wheel packages on ``.. py-repl::`` directives:
+
+.. code-block:: rst
+
+   .. py-repl::
+      :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+      :no-header:
+      :no-banner:
+
+      >>> import pyrepl_test_pkg
+      >>> pyrepl_test_pkg.ping()
+
+.. py-repl::
+   :packages: _static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl
+   :no-header:
+   :no-banner:
+
+   >>> import pyrepl_test_pkg
+   >>> pyrepl_test_pkg.ping()
+
+
 Autodoc
 -------
 
-The documented module's source is loaded in advance before replay, so
-module members are available in the REPL namespace. Modules under the Sphinx
-source tree use silent ``:src:``; installed packages use ``packages=``.
+Use ``pyrepl_doctest_blocks = "autodoc"`` to turn docstrings from ``autodoc`` into interactive REPL examples.
+
+Set ``pyrepl_autodoc_packages`` to install the documented package and automatically import the documented object before replay:
+
+.. code-block:: python
+
+   # conf.py
+   html_static_path = ["_static"]
+   pyrepl_doctest_blocks = "autodoc"
+   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
 
 Source module:
 
-.. literalinclude:: _static/autodoc_demo.py
+.. literalinclude:: ../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
    :language: python
 
 RST content:
 
 .. code-block:: rst
 
-   .. autofunction:: autodoc_demo.example_generator
+   .. autofunction:: pyrepl_test_pkg.demo.example_generator
 
 Rendered result:
 
-.. autofunction:: autodoc_demo.example_generator
+.. autofunction:: pyrepl_test_pkg.demo.example_generator

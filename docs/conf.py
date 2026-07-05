@@ -1,10 +1,6 @@
 from datetime import date
-import sys
-from pathlib import Path
 
 from sphinx_pyrepl_web import __version__
-
-sys.path.insert(0, str(Path(__file__).parent / "_static"))
 
 project = "sphinx-pyrepl-web"
 version = __version__
@@ -18,7 +14,9 @@ extensions = [
     "sphinx_pyrepl_web",
 ]
 pyrepl_doctest_blocks = "autodoc"
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+html_static_path = ["_static"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "example.rst"]
 
 html_sidebars = {
     "**": [

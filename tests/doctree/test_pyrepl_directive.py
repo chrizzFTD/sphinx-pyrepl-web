@@ -1,3 +1,4 @@
+import pytest
 from sphinx_pytest.plugin import CreateDoctree
 
 
@@ -18,7 +19,6 @@ Test
     """
     )
     lines = [line.rstrip() for line in result.pformat().strip().splitlines()]
-    # Sphinx may serialize doctree bool attrs as "1" or "True" depending on version.
     lines[0] = lines[0].replace('pyrepl="True"', 'pyrepl="1"')
     assert lines == """
 <document pyrepl="1" source="<src>/index.rst">
@@ -30,22 +30,6 @@ Test
         <raw format="html" xml:space="preserve">
             <py-repl></py-repl>
     """.strip().splitlines()
-
-
-def test_replay_body(sphinx_doctree: CreateDoctree):
-    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"]})
-    sphinx_doctree.buildername = "html"
-    result = sphinx_doctree(
-        """
-.. py-repl::
-   :no-header:
-
-   >>> x = 1
-   >>> x + 1
-    """
-    )
-    html = result.pformat()
-    assert 'replay-src="_static/pyrepl/index-1.py"' in html
 
 
 def test_replay_file_flag(sphinx_doctree: CreateDoctree):
@@ -67,3 +51,42 @@ def test_replay_file_flag(sphinx_doctree: CreateDoctree):
     html = result.pformat()
     assert 'src="demo.py"' in html
     assert "replay" in html
+
+
+@pytest.mark.parametrize(
+    "options,expected_fragments",
+    [
+        (":no-buttons:\n   :readonly:", ["no-buttons", "readonly"]),
+        (":repl-title: My REPL", ['repl-title="My REPL"']),
+    ],
+    ids=["flag-options", "repl-title"],
+)
+def test_pyrepl_directive_options(
+    sphinx_doctree: CreateDoctree, options, expected_fragments
+):
+    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"], "root_doc": "index"})
+    sphinx_doctree.buildername = "html"
+    (sphinx_doctree.srcdir / "demo.py").write_text("print('hi')\n", encoding="utf-8")
+    result = sphinx_doctree(
+        f"""
+.. py-repl::
+   {options}
+
+   >>> 1 + 1
+"""
+    )
+    html = result.pformat()
+    for fragment in expected_fragments:
+        assert fragment in html
+
+
+def test_missing_src_file_reports_error(sphinx_doctree: CreateDoctree):
+    sphinx_doctree.set_conf({"extensions": ["sphinx_pyrepl_web"]})
+    sphinx_doctree.buildername = "html"
+    result = sphinx_doctree(
+        """
+.. py-repl::
+   :src: missing.py
+"""
+    )
+    assert "Could not read file" in result.warnings

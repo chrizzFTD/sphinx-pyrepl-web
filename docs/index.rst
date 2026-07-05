@@ -3,5 +3,7 @@
 
 .. include:: example.rst
 
+.. include:: development.rst
+
 .. toctree::
    :maxdepth: 2

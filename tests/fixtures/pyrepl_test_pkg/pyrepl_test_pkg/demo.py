@@ -1,5 +1,6 @@
 """Demo module for autodoc doctest REPL integration."""
 
+
 def example_generator(n):
     """Generators yield values useful for iteration.
 
