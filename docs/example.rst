@@ -120,38 +120,10 @@ Rendered result:
    :no-header:
    :no-banner:
 
-Autodoc
--------
+Local packages
+--------------
 
-Use ``pyrepl_doctest_blocks = "autodoc"`` for interactive REPL examples.
-Set ``pyrepl_autodoc_packages`` to install the documented package and automatically import the documented object before replay:
-
-.. code-block:: python
-
-   # conf.py
-   html_static_path = ["_static"]
-   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
-
-Source module:
-
-.. literalinclude:: ../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
-   :language: python
-
-RST content:
-
-.. code-block:: rst
-
-   .. autofunction:: pyrepl_test_pkg.demo.example_generator
-
-Rendered result:
-
-.. autofunction:: pyrepl_test_pkg.demo.example_generator
-
-Local Pyodide wheels
---------------------
-
-The same wheel can be referenced manually from ``.. py-repl::`` when you want
-a standalone REPL without autodoc:
+Use static local wheel packages on ``.. py-repl::`` directives:
 
 .. code-block:: rst
 
@@ -170,3 +142,32 @@ a standalone REPL without autodoc:
 
    >>> import pyrepl_test_pkg
    >>> pyrepl_test_pkg.ping()
+
+
+Autodoc
+-------
+
+Use ``pyrepl_doctest_blocks = "autodoc"`` for interactive REPL examples.
+Set ``pyrepl_autodoc_packages`` to install the documented package and automatically import the documented object before replay:
+
+.. code-block:: python
+
+   # conf.py
+   html_static_path = ["_static"]
+   pyrepl_doctest_blocks = "autodoc"
+   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+
+Source module:
+
+.. literalinclude:: ../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py
+   :language: python
+
+RST content:
+
+.. code-block:: rst
+
+   .. autofunction:: pyrepl_test_pkg.demo.example_generator
+
+Rendered result:
+
+.. autofunction:: pyrepl_test_pkg.demo.example_generator
