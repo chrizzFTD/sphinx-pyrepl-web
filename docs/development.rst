@@ -1,51 +1,71 @@
 Development
 ===========
 
-Git clone, then install:
+Setup
+-----
+
+Clone the repository, then install in editable mode with test and docs dependencies:
 
 .. code-block:: bash
 
-    pip install -e ".[test,docs]"
+   pip install -e ".[test,docs]"
 
-The `[docs]` extra installs the `pyrepl_test_pkg` fixture used in the examples.
+The ``[docs]`` extra pulls in doc build dependencies and the ``pyrepl_test_pkg``
+fixture used in the examples.
 
-Python code within the `.. py-repl::` directive is written to `_static/pyrepl/` at build time and emitted as `replay-src`.
+Build-time behavior
+-------------------
 
-File paths in `:packages:`, `:src:`, `replay-src`, and `pyrepl_autodoc_packages` are rewritten to page-relative URLs at build time so REPLs work on nested pages (for example `docs/api/...`). PyPI package names, absolute URLs, and paths you write as root-absolute (`/_static/...`) are left unchanged.
+Python code within a ``.. py-repl::`` directive is written to ``_static/pyrepl/``
+at build time and emitted as ``replay-src``.
 
-``pyrepl_js`` (default: ``"../pyrepl.js"``) sets the loader script Sphinx injects on REPL pages; the extension vendors and copies pyrepl-web automatically, so override it only for a custom loader path or CDN.
+File paths in ``:packages:``, ``:src:``, ``replay-src``, and
+``pyrepl_autodoc_packages`` are rewritten to page-relative URLs so REPLs work on
+nested pages (for example ``docs/api/...``). PyPI package names, absolute URLs,
+and paths written as root-absolute (``/_static/...``) are left unchanged.
 
-wheels
-Wheels under ``_static/`` are copied into the HTML output when ``_static`` is listed
-in ``html_static_path`` (Sphinx does not copy project static files automatically
-unless configured). At runtime, [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)
+``pyrepl_js`` (default: ``"../pyrepl.js"``) sets the loader script Sphinx injects
+on REPL pages. The extension vendors and copies `pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_ automatically;
+override this only when pointing at a custom loader path or CDN.
+
+Static wheels
+-------------
+
+Wheels under ``_static/`` are copied into the HTML output when ``_static`` is
+listed in ``html_static_path``. At runtime, `pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_
 resolves site-relative wheel paths to absolute URLs before calling
 ``micropip.install()``.
 
-**CI tip:** copy each build artifact to a stable docs filename so RST does not
-need updating per release, for example
-``cp dist/myext-1.2.3-*.whl docs/_static/wheels/myext-pyodide.whl``.
+Paths must use the wheel's actual PyPI-compliant filename (for example
+``myext-1.2.3-py3-none-any.whl``). ``micropip`` rejects other names.
+
+.. tip::
+
+   Copy each build artifact into ``docs/_static/wheels/`` under its original
+   filename, then update ``:packages:`` or ``pyrepl_autodoc_packages`` when the
+   version changes::
+
+      cp dist/myext-1.2.3-*.whl docs/_static/wheels/
 
 Ensure the web server serves ``.whl`` files with MIME type ``application/zip``
 (Read the Docs does this by default).
 
+Updating pyrepl-web
+-------------------
 
-## Updating pyrepl-web
+This extension vendors JavaScript from
+`pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_'s fork for easier
+distribution. To refresh the vendored assets:
 
-Since [chrizzFTD/pyrepl-web](https://github.com/chrizzFTD/pyrepl-web) is a fork, this sphinx extension vendors the JavaScript assets for easier distribution. To update them, run:
+.. code-block:: bash
 
-```bash
-python scripts/vendor_repl.py
-```
+   python scripts/vendor_repl.py
 
-The `grill` branch is used by default. Use the `branch` argument to specify a different one:
+The ``grill`` branch is used by default. Pass ``--branch`` to vendor from another
+branch:
 
-```bash
-python scripts/vendor_repl.py --branch custom/feature-branch
-```
+.. code-block:: bash
 
-This requires [git](https://git-scm.com/) and [Bun](https://bun.sh/).
+   python scripts/vendor_repl.py --branch custom/feature-branch
 
-
-Basic REPL
-----------
+This requires `git <https://git-scm.com/>`_ and `Bun <https://bun.sh/>`_.
