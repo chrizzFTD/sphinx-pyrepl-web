@@ -1,5 +1,10 @@
 # sphinx-pyrepl-web
 
+[![Python CI](https://github.com/chrizzFTD/sphinx-pyrepl-web/actions/workflows/python-package.yml/badge.svg)](https://github.com/chrizzFTD/sphinx-pyrepl-web/actions/workflows/python-package.yml)
+[![Documentation Status](https://readthedocs.org/projects/sphinx-pyrepl-web/badge/?version=latest)](https://sphinx-pyrepl-web.readthedocs.io/en/latest/?badge=latest)
+[![PyPI version](https://badge.fury.io/py/sphinx-pyrepl-web.svg)](https://badge.fury.io/py/sphinx-pyrepl-web)
+[![PyPI](https://img.shields.io/pypi/pyversions/sphinx-pyrepl-web.svg)](https://pypi.python.org/pypi/sphinx-pyrepl-web)
+
 Sphinx extension to embed [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web) in documentation.
 
 ## Install
