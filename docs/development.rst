@@ -51,7 +51,7 @@ Static wheels
 -------------
 
 Wheel packages must be `Pyodide <https://pyodide.org/en/stable/>`_ compatible (pure-python packages work out of the box).
-For ``CPython`` extensions, visit `pyodide-build <https://pyodide-build.readthedocs.io/en/latest/>`_
+For ``CPython`` extensions, visit `pyodide-build <https://pyodide-build.readthedocs.io/en/latest/>`_.
 
 Wheels under ``_static/`` are copied into the HTML output when ``_static`` is
 listed in ``html_static_path``. At runtime, `pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_
