@@ -10,6 +10,9 @@ python:
       path: .
       extra_requirements:
         - docs
+    # Autodoc examples import pyrepl_test_pkg; cannot live in [docs] extra (PyPI rejects file: URLs).
+    - method: pip
+      path: tests/fixtures/pyrepl_test_pkg
 
 sphinx:
    configuration: docs/conf.py
