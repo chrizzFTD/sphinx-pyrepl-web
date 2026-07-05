@@ -4,14 +4,17 @@ Development
 Setup
 -----
 
-Clone the repository, then install in editable mode with test and docs dependencies:
+Clone the repository, then install in editable mode with test and docs dependencies,
+plus the local ``pyrepl_test_pkg`` fixture used in the examples:
 
 .. code-block:: bash
 
    pip install -e ".[test,docs]"
+   pip install -e tests/fixtures/pyrepl_test_pkg
 
-The ``[docs]`` extra pulls in doc build dependencies and the ``pyrepl_test_pkg``
-fixture used in the examples.
+The ``[docs]`` extra pulls in doc build dependencies only (``myst-parser``).
+The fixture package is installed separately because PyPI packages cannot declare
+local path dependencies.
 
 Build and preview docs
 ----------------------
