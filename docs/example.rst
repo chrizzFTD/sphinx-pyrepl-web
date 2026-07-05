@@ -147,7 +147,8 @@ Use static local wheel packages on ``.. py-repl::`` directives:
 Autodoc
 -------
 
-Use ``pyrepl_doctest_blocks = "autodoc"`` for interactive REPL examples.
+Use ``pyrepl_doctest_blocks = "autodoc"`` to turn docstrings from ``autodoc`` into interactive REPL examples.
+
 Set ``pyrepl_autodoc_packages`` to install the documented package and automatically import the documented object before replay:
 
 .. code-block:: python

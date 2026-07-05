@@ -10,7 +10,7 @@ pip install sphinx-pyrepl-web
 
 ## Usage
 
-Add the extension to the target project's `conf.py`:
+Add the extension to the target project's `conf.py` module:
 
 ```python
 extensions = [
@@ -56,15 +56,15 @@ All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attrib
 
 ### Sphinx options
 
-Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) conversion into pre-configured interactive REPLs
+Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) conversion into pre-configured interactive REPLs with:
 
 `pyrepl_doctest_blocks`:
 
-| Value             | Outcome                             |
-|-------------------|-------------------------------------|
-| `False` (default) | Don't convert doctest blocks        |
-| `"autodoc"`       | Convert doctest blocks from autodoc |
-| `"all"`           | Convert all doctest blocks          |
+| Value             | Outcome                               |
+|-------------------|---------------------------------------|
+| `False` (default) | Don't convert doctest blocks          |
+| `"autodoc"`       | Convert doctest blocks from `autodoc` |
+| `"all"`           | Convert all doctest blocks            |
 
 `pyrepl_autodoc_packages`:
 
@@ -75,7 +75,7 @@ Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) 
 
 ### Local wheels
 
-Unreleased branches can be available in the REPL by building the corresponding wheel and placing it under Sphinx's `html_static_path`.
+Unreleased package wheels can be available in the REPL by building them under Sphinx's `html_static_path`.
 
 All options combined:
 
