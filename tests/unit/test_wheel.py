@@ -128,7 +128,8 @@ def test_wheel_is_stale_when_source_changes(tmp_path):
     assert not wheel_is_fresh(wheel, project, wheel_dir=wheel_dir)
 
 
-def test_build_wheel_creates_fixture_wheel(tmp_path):
+def test_build_wheel_creates_fixture_wheel(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYTHONWARNINGS", "error")
     wheel_dir = tmp_path / "wheels"
     build_wheel(PKG_ROOT, wheel_dir)
     wheel = find_newest_wheel(wheel_dir, "pyrepl_test_pkg")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -142,6 +143,14 @@ def wheel_is_fresh(wheel_path: Path, project_root: Path, *, wheel_dir: Path) -> 
     return wheel_mtime >= project_latest_mtime(project_root, wheel_dir=wheel_dir)
 
 
+def _wheel_build_env() -> dict[str, str]:
+    """Return a subprocess environment safe for ``pip wheel`` under strict warnings."""
+    env = os.environ.copy()
+    # CI sets PYTHONWARNINGS=error; pip's pkg_resources import emits DeprecationWarning.
+    env.pop("PYTHONWARNINGS", None)
+    return env
+
+
 def build_wheel(project_root: Path, wheel_dir: Path) -> None:
     """Build a wheel for *project_root* into *wheel_dir*."""
     wheel_dir.mkdir(parents=True, exist_ok=True)
@@ -160,6 +169,7 @@ def build_wheel(project_root: Path, wheel_dir: Path) -> None:
             check=True,
             capture_output=True,
             text=True,
+            env=_wheel_build_env(),
         )
     except subprocess.CalledProcessError as exc:
         detail = (exc.stderr or exc.stdout or "").strip()
