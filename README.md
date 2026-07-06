@@ -76,11 +76,19 @@ Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) 
 | Value                   | Outcome                                                            |
 |-------------------------|--------------------------------------------------------------------|
 | `None` (default)        | Replay doctest input without preloading packages                   |
+| `:project:`           | Build a wheel from the documented project and preload it           |
 | Wheel path / PyPI names | Install the package and import the documented object before replay |
+
+Optional when using `:project:`:
+
+| Value | Default | Outcome |
+|-------|---------|---------|
+| `pyrepl_project_root` | auto-detect | Project root containing `pyproject.toml` (relative to `conf.py`) |
+| `pyrepl_wheel_dir` | `_static/wheels` | Directory for the built wheel, relative to `conf.py` |
 
 ### Local wheels
 
-Unreleased package wheels can be available in the REPL by building them under Sphinx's `html_static_path`.
+Unreleased package wheels can be available in the REPL by building them under Sphinx's `html_static_path`, or by using `:project:` to build automatically at doc-build time.
 
 All options combined:
 
@@ -93,5 +101,12 @@ extensions = [
 html_static_path = ["_static"]
 
 pyrepl_doctest_blocks = "autodoc"
-pyrepl_autodoc_packages = "_static/wheels/my_package-1.0.0-py3-none-any.whl"
+pyrepl_autodoc_packages = ":project:"
+```
+
+For a monorepo or non-default layout, point at the package root explicitly:
+
+```python
+pyrepl_autodoc_packages = ":project:"
+pyrepl_project_root = ".."
 ```

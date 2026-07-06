@@ -156,7 +156,8 @@ Set ``pyrepl_autodoc_packages`` to install the documented package and automatica
    # conf.py
    html_static_path = ["_static"]
    pyrepl_doctest_blocks = "autodoc"
-   pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+   pyrepl_autodoc_packages = ":project:"
+   pyrepl_project_root = "../tests/fixtures/pyrepl_test_pkg"
 
 Source module:
 
