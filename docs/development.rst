@@ -61,6 +61,10 @@ project automatically during the Sphinx HTML build. The wheel is written to
 ``_static/wheels/`` (configurable via ``pyrepl_wheel_dir``) and reused on
 incremental builds until project sources change.
 
+Combine ``:project:`` with other package entries in a comma-separated list
+(for example ``":project:,grill-names>=2.6.0"``) or in the ``:packages:`` option
+on ``.. py-repl::`` directives.
+
 Wheels under ``_static/`` are copied into the HTML output when ``_static`` is
 listed in ``html_static_path``. At runtime, `pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_
 resolves site-relative wheel paths to absolute URLs before calling

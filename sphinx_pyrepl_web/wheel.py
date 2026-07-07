@@ -14,7 +14,8 @@ from sphinx.application import Sphinx
 from sphinx.errors import ConfigError
 from sphinx.util import logging
 
-PROJECT_SENTINEL = ":project:"
+from sphinx_pyrepl_web.packages import PROJECT_SENTINEL
+
 _PROJECT_MARKERS = ("pyproject.toml", "setup.cfg", "setup.py")
 _SKIP_DIRS = frozenset(
     {
@@ -33,11 +34,6 @@ _SKIP_DIRS = frozenset(
     }
 )
 logger = logging.getLogger(__name__)
-
-
-def is_project_sentinel(value: object) -> bool:
-    """Return True if *value* requests automatic project wheel resolution."""
-    return value == PROJECT_SENTINEL
 
 
 def _is_project_root(path: Path) -> bool:
@@ -61,7 +57,7 @@ def find_project_root(confdir: Path, override: str | None = None) -> Path:
             return candidate
 
     raise ConfigError(
-        "pyrepl_autodoc_packages is ':project:' but no project root was found "
+        f"package list includes {PROJECT_SENTINEL!r} but no project root was found "
         f"searching upward from {confdir}"
     )
 
@@ -238,10 +234,22 @@ def ensure_project_wheel(app: Sphinx) -> str:
     return resolved_wheel_href(wheel_dir_setting, wheel_path.name)
 
 
+def project_wheel_href(app: Sphinx) -> str:
+    """Return cached project wheel href, building on first use."""
+    try:
+        return object.__getattribute__(app, "_pyrepl_project_wheel_href")
+    except AttributeError:
+        href = ensure_project_wheel(app)
+        app._pyrepl_project_wheel_href = href
+        return href
+
+
 def ensure_project_wheel_on_init(app: Sphinx) -> None:
     """Resolve ``:project:`` before doctrees are read."""
-    if not is_project_sentinel(app.config.pyrepl_autodoc_packages):
+    from sphinx_pyrepl_web.packages import packages_include_project
+
+    if not packages_include_project(app.config.pyrepl_autodoc_packages):
         return
     if app.builder.format != "html":
         return
-    app._pyrepl_resolved_autodoc_packages = ensure_project_wheel(app)
+    project_wheel_href(app)

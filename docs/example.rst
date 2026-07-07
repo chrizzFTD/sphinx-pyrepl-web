@@ -159,6 +159,19 @@ Set ``pyrepl_autodoc_packages`` to install the documented package and automatica
    pyrepl_autodoc_packages = ":project:"
    pyrepl_project_root = "../tests/fixtures/pyrepl_test_pkg"
 
+To preload the project wheel plus additional packages:
+
+.. code-block:: python
+
+   pyrepl_autodoc_packages = ":project:,extra-pkg>=1.0"
+
+The ``:project:`` sentinel also works in directive options:
+
+.. code-block:: rst
+
+   .. py-repl::
+      :packages: :project:, numpy
+
 Source module:
 
 .. literalinclude:: ../tests/fixtures/pyrepl_test_pkg/pyrepl_test_pkg/demo.py

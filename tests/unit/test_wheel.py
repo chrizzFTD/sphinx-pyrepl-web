@@ -8,14 +8,13 @@ import pytest
 from sphinx.errors import ConfigError
 
 from sphinx_pyrepl_web.wheel import (
-    PROJECT_SENTINEL,
     build_wheel,
     ensure_project_wheel,
     find_newest_wheel,
     find_project_root,
-    is_project_sentinel,
     normalize_distribution_name,
     project_latest_mtime,
+    project_wheel_href,
     read_distribution_name,
     resolved_wheel_href,
     wheel_is_fresh,
@@ -25,10 +24,23 @@ from tests.support import FIXTURES
 PKG_ROOT = FIXTURES / "pyrepl_test_pkg"
 
 
-def test_is_project_sentinel():
-    assert is_project_sentinel(PROJECT_SENTINEL)
-    assert not is_project_sentinel("_static/wheels/foo.whl")
-    assert not is_project_sentinel(None)
+def test_project_wheel_href_caches_result(tmp_path):
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    app = MagicMock()
+    app.confdir = str(docs)
+    app.config.pyrepl_project_root = str(PKG_ROOT)
+    app.config.pyrepl_wheel_dir = "_static/wheels"
+    app.config.html_static_path = ["_static"]
+
+    with patch("sphinx_pyrepl_web.wheel.ensure_project_wheel") as ensure_mock:
+        ensure_mock.return_value = "_static/wheels/demo.whl"
+        first = project_wheel_href(app)
+        second = project_wheel_href(app)
+
+    assert first == second == "_static/wheels/demo.whl"
+    ensure_mock.assert_called_once_with(app)
+    assert app._pyrepl_project_wheel_href == "_static/wheels/demo.whl"
 
 
 def test_find_project_root_from_nested_confdir(tmp_path):

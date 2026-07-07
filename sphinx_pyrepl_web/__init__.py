@@ -1,6 +1,6 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 import json
 from doctest import DocTestParser
@@ -16,6 +16,7 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
 from sphinx.util.osutil import relative_uri
 
+from sphinx_pyrepl_web.packages import resolve_packages
 from sphinx_pyrepl_web.wheel import ensure_project_wheel_on_init
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
@@ -56,7 +57,7 @@ def setup(app: Sphinx):
     """Setup the extension."""
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
     app.add_config_value("pyrepl_doctest_blocks", False, "env", types=(bool, str))
-    app.add_config_value("pyrepl_autodoc_packages", None, "env")
+    app.add_config_value("pyrepl_autodoc_packages", None, "env", types=(str, list))
     app.add_config_value("pyrepl_project_root", None, "env")
     app.add_config_value("pyrepl_wheel_dir", "_static/wheels", "env")
     app.add_directive("py-repl", PyRepl)
@@ -172,14 +173,7 @@ def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
 
 def _autodoc_packages(app: Sphinx) -> str | None:
     """Return configured package preload for autodoc doctest REPLs."""
-    try:
-        resolved = object.__getattribute__(app, "_pyrepl_resolved_autodoc_packages")
-    except AttributeError:
-        resolved = None
-    if resolved is not None:
-        return resolved
-    raw = app.config.pyrepl_autodoc_packages
-    return raw or None
+    return resolve_packages(app, app.config.pyrepl_autodoc_packages)
 
 
 def _inside_autodoc_desc(node: nodes.Node) -> bool:
@@ -262,6 +256,9 @@ class PyRepl(SphinxDirective):
             if option in self.options:
                 value = self.options[option]
                 if option == "packages":
+                    value = resolve_packages(self.env._app, value)
+                    if value is None:
+                        continue
                     value = _asset_href_packages(builder, docname, value)
                 attrs.append(f'{attr}="{value}"')
 
