@@ -15,6 +15,7 @@ from sphinx_pyrepl_web.wheel import (
     find_project_root,
     is_project_sentinel,
     normalize_distribution_name,
+    project_latest_mtime,
     read_distribution_name,
     resolved_wheel_href,
     wheel_is_fresh,
@@ -160,8 +161,8 @@ def test_ensure_project_wheel_reuses_fresh_wheel(tmp_path):
     wheel_dir.mkdir(parents=True)
     wheel = wheel_dir / "pyrepl_test_pkg-1.0.0-py2.py3-none-any.whl"
     wheel.write_bytes(b"wheel")
-    now = os.path.getmtime(PKG_ROOT / "pyproject.toml")
-    os.utime(wheel, (now, now))
+    latest = project_latest_mtime(PKG_ROOT, wheel_dir=wheel_dir)
+    os.utime(wheel, (latest + 10, latest + 10))
 
     app = MagicMock()
     app.confdir = str(docs)

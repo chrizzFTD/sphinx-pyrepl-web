@@ -139,8 +139,10 @@ def wheel_is_fresh(wheel_path: Path, project_root: Path, *, wheel_dir: Path) -> 
     """Return True if *wheel_path* is newer than relevant project sources."""
     if not wheel_path.is_file():
         return False
-    wheel_mtime = wheel_path.stat().st_mtime
-    return wheel_mtime >= project_latest_mtime(project_root, wheel_dir=wheel_dir)
+    # Compare whole seconds; subsecond utime precision varies across platforms.
+    wheel_mtime = int(wheel_path.stat().st_mtime)
+    project_mtime = int(project_latest_mtime(project_root, wheel_dir=wheel_dir))
+    return wheel_mtime >= project_mtime
 
 
 def _wheel_build_env() -> dict[str, str]:
