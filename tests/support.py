@@ -60,7 +60,11 @@ def project_wheel_conf_extra(*, srcdir: Path | None = None) -> str:
     if srcdir is not None:
         import os
 
-        project_root = os.path.relpath(fixture.resolve(), srcdir.resolve())
+        try:
+            project_root = os.path.relpath(fixture.resolve(), srcdir.resolve())
+        except ValueError:
+            # Windows: fixture and srcdir may live on different drives.
+            project_root = str(fixture.resolve())
     else:
         project_root = str(fixture.resolve())
     return f"""
