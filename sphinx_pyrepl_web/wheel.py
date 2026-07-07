@@ -14,7 +14,7 @@ from sphinx.application import Sphinx
 from sphinx.errors import ConfigError
 from sphinx.util import logging
 
-from sphinx_pyrepl_web.packages import PROJECT_SENTINEL
+from sphinx_pyrepl_web._packages import PROJECT_SENTINEL
 
 _PROJECT_MARKERS = ("pyproject.toml", "setup.cfg", "setup.py")
 _SKIP_DIRS = frozenset(
@@ -246,7 +246,7 @@ def project_wheel_href(app: Sphinx) -> str:
 
 def ensure_project_wheel_on_init(app: Sphinx) -> None:
     """Resolve ``:project:`` before doctrees are read."""
-    from sphinx_pyrepl_web.packages import packages_include_project
+    from sphinx_pyrepl_web._packages import packages_include_project
 
     if not packages_include_project(app.config.pyrepl_autodoc_packages):
         return

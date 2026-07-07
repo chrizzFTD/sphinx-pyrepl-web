@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from sphinx_pyrepl_web.packages import (
+from sphinx_pyrepl_web._packages import (
     format_packages,
     is_project_entry,
     packages_include_project,

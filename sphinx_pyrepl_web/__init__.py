@@ -16,7 +16,7 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
 from sphinx.util.osutil import relative_uri
 
-from sphinx_pyrepl_web.packages import resolve_packages
+from sphinx_pyrepl_web._packages import resolve_packages
 from sphinx_pyrepl_web.wheel import ensure_project_wheel_on_init
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
