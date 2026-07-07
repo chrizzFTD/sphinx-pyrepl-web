@@ -1,6 +1,6 @@
 """A Sphinx extension for embedding pyrepl-web Python REPLs in documentation."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 import json
 from doctest import DocTestParser
@@ -15,6 +15,8 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
 from sphinx.util.fileutil import copy_asset_file
 from sphinx.util.osutil import relative_uri
+
+from sphinx_pyrepl_web.wheel import ensure_project_wheel_on_init
 
 PYREPL_DIR = Path(__file__).parent / "pyrepl"
 STARTUP_FILES_KEY = "pyrepl-startup-files"
@@ -55,7 +57,10 @@ def setup(app: Sphinx):
     app.add_config_value("pyrepl_js", "../pyrepl.js", "env")
     app.add_config_value("pyrepl_doctest_blocks", False, "env", types=(bool, str))
     app.add_config_value("pyrepl_autodoc_packages", None, "env")
+    app.add_config_value("pyrepl_project_root", None, "env")
+    app.add_config_value("pyrepl_wheel_dir", "_static/wheels", "env")
     app.add_directive("py-repl", PyRepl)
+    app.connect("builder-inited", ensure_project_wheel_on_init)
     app.connect("doctree-read", doctree_read)
     app.connect("doctree-read", transform_doctest_blocks)
     app.connect("html-page-context", add_html_context)
@@ -167,7 +172,14 @@ def _find_autodoc_desc(node: nodes.Node) -> addnodes.desc | None:
 
 def _autodoc_packages(app: Sphinx) -> str | None:
     """Return configured package preload for autodoc doctest REPLs."""
-    return app.config.pyrepl_autodoc_packages or None
+    try:
+        resolved = object.__getattribute__(app, "_pyrepl_resolved_autodoc_packages")
+    except AttributeError:
+        resolved = None
+    if resolved is not None:
+        return resolved
+    raw = app.config.pyrepl_autodoc_packages
+    return raw or None
 
 
 def _inside_autodoc_desc(node: nodes.Node) -> bool:
@@ -356,3 +368,14 @@ def copy_asset_files(app, _):
             dest = outdir / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             copy_asset_file(str(path.resolve()), str(dest.resolve()))
+
+    wheel_dir_setting = app.config.pyrepl_wheel_dir
+    src_wheel_dir = Path(app.confdir) / wheel_dir_setting
+    if src_wheel_dir.is_dir():
+        dest_wheel_dir = outdir / wheel_dir_setting
+        dest_wheel_dir.mkdir(parents=True, exist_ok=True)
+        for wheel in src_wheel_dir.glob("*.whl"):
+            copy_asset_file(
+                str(wheel.resolve()),
+                str((dest_wheel_dir / wheel.name).resolve()),
+            )

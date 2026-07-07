@@ -54,6 +54,26 @@ pyrepl_autodoc_packages = {WHEEL_PATH!r}
 """
 
 
+def project_wheel_conf_extra(*, srcdir: Path | None = None) -> str:
+    """Return conf.py snippet enabling automatic project wheel builds."""
+    fixture = FIXTURES / "pyrepl_test_pkg"
+    if srcdir is not None:
+        import os
+
+        try:
+            project_root = os.path.relpath(fixture.resolve(), srcdir.resolve())
+        except ValueError:
+            # Windows: fixture and srcdir may live on different drives.
+            project_root = str(fixture.resolve())
+    else:
+        project_root = str(fixture.resolve())
+    return f"""
+html_static_path = ["_static"]
+pyrepl_autodoc_packages = ":project:"
+pyrepl_project_root = {project_root!r}
+"""
+
+
 def autodoc_conf_header(*, sys_path: str, extra: str = "") -> str:
     """Return a minimal autodoc-enabled conf.py header."""
     return f"""

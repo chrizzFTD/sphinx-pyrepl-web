@@ -14,7 +14,8 @@ extensions = [
     "sphinx_pyrepl_web",
 ]
 pyrepl_doctest_blocks = "autodoc"
-pyrepl_autodoc_packages = "_static/wheels/pyrepl_test_pkg-1.0.0-py3-none-any.whl"
+pyrepl_autodoc_packages = ":project:"
+pyrepl_project_root = "../tests/fixtures/pyrepl_test_pkg"
 html_static_path = ["_static"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "example.rst"]
 

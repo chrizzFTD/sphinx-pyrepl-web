@@ -5,6 +5,7 @@ __pycache__/
 .venv-build-test/
 .venv-testpypi/
 docs/_build/
+docs/_static/wheels/*.whl
 dist/
 build/
 *.egg

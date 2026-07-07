@@ -56,6 +56,11 @@ Static wheels
 Wheel packages must be `Pyodide <https://pyodide.org/en/stable/>`_ compatible (pure-python packages work out of the box).
 For ``CPython`` extensions, visit `pyodide-build <https://pyodide-build.readthedocs.io/en/latest/>`_.
 
+Set ``pyrepl_autodoc_packages = ":project:"`` to build a wheel from the documented
+project automatically during the Sphinx HTML build. The wheel is written to
+``_static/wheels/`` (configurable via ``pyrepl_wheel_dir``) and reused on
+incremental builds until project sources change.
+
 Wheels under ``_static/`` are copied into the HTML output when ``_static`` is
 listed in ``html_static_path``. At runtime, `pyrepl-web <https://github.com/chrizzFTD/pyrepl-web>`_
 resolves site-relative wheel paths to absolute URLs before calling
