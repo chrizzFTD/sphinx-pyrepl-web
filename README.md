@@ -114,8 +114,7 @@ pyrepl_project_root = ".."
 When the REPL needs the project wheel plus additional packages, combine them in one list:
 
 ```python
-pyrepl_autodoc_packages = ":project:,grill-usd-core==26.8,grill-names>=2.6.0"
-pyrepl_project_root = "../.."
+pyrepl_autodoc_packages = ":project:, numpy"
 ```
 
 The same `:project:` sentinel works in directive options:
