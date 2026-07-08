@@ -50,7 +50,7 @@ All options drive [pyrepl-web](https://github.com/chrizzFTD/pyrepl-web)'s attrib
 | Option | Description                                                    |
 |--------|----------------------------------------------------------------|
 | `:theme:` | Color theme (`catppuccin-mocha`, `catppuccin-latte`)           |
-| `:packages:` | Comma-separated PyPI packages, URLs or relative wheel paths    |
+| `:packages:` | Comma-separated PyPI packages, URLs, relative wheel paths, or `:project:` |
 | `:repl-title:` | Title in the REPL header                                       |
 | `:src:` | Path to a Python startup script                                |
 | `:replay:` | Replay `:src:` with interactive prompts instead of silent load |
@@ -77,7 +77,7 @@ Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) 
 |-------------------------|--------------------------------------------------------------------|
 | `None` (default)        | Replay doctest input without preloading packages                   |
 | `:project:`           | Build a wheel from the documented project and preload it           |
-| Wheel path / PyPI names | Install the package and import the documented object before replay |
+| Wheel / PyPI names      | Extra packages to install, e.g. `":project:,numpy"`                |
 
 Optional when using `:project:`:
 
@@ -109,4 +109,17 @@ For a monorepo or non-default layout, point at the package root explicitly:
 ```python
 pyrepl_autodoc_packages = ":project:"
 pyrepl_project_root = ".."
+```
+
+When the REPL needs the project wheel plus additional packages, combine them in one list:
+
+```python
+pyrepl_autodoc_packages = ":project:, numpy"
+```
+
+The same `:project:` sentinel works in directive options:
+
+```rst
+.. py-repl::
+   :packages: :project:, numpy
 ```

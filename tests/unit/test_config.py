@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from tests.support import WHEEL_PATH
 from sphinx_pyrepl_web import _autodoc_packages
@@ -16,12 +16,17 @@ from sphinx_pyrepl_web import _autodoc_packages
 )
 def test_autodoc_packages(configured, expected):
     app = MagicMock()
+    app.builder.format = "html"
     app.config.pyrepl_autodoc_packages = configured
     assert _autodoc_packages(app) == expected
 
 
-def test_autodoc_packages_uses_resolved_project_wheel():
+def test_autodoc_packages_resolves_project_with_extra_packages():
     app = MagicMock()
-    app.config.pyrepl_autodoc_packages = ":project:"
-    app._pyrepl_resolved_autodoc_packages = WHEEL_PATH
-    assert _autodoc_packages(app) == WHEEL_PATH
+    app.builder.format = "html"
+    app.config.pyrepl_autodoc_packages = ":project:, numpy"
+    with patch(
+        "sphinx_pyrepl_web.wheel.project_wheel_href", return_value=WHEEL_PATH
+    ) as wheel_mock:
+        assert _autodoc_packages(app) == f"{WHEEL_PATH}, numpy"
+    wheel_mock.assert_called_once_with(app)
