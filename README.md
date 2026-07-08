@@ -77,8 +77,7 @@ Enable [doctest style examples](https://docs.python.org/3/library/doctest.html) 
 |-------------------------|--------------------------------------------------------------------|
 | `None` (default)        | Replay doctest input without preloading packages                   |
 | `:project:`           | Build a wheel from the documented project and preload it           |
-| Comma-separated list    | Mix `:project:` with PyPI names or wheel paths (for example `":project:,grill-names>=2.6.0"`) |
-| Wheel path / PyPI names | Install the package and import the documented object before replay |
+| Wheel / PyPI names      | Extra packages to install, e.g. `":project:,numpy"`                |
 
 Optional when using `:project:`:
 
